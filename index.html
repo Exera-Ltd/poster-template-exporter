@@ -244,6 +244,8 @@
             gap: 8px;
             z-index: 100;
             align-items: center;
+            flex-wrap: wrap;
+            max-width: 90%;
         }
 
         .floating-toolbar.visible {
@@ -274,6 +276,11 @@
             transform: scale(0.95);
         }
 
+        .toolbar-btn.active {
+            background: #07778F;
+            color: white;
+        }
+
         .toolbar-btn.danger:hover {
             background: #ffebee;
             color: #dc3545;
@@ -284,6 +291,36 @@
             height: 30px;
             background: #dee2e6;
             margin: 0 5px;
+        }
+
+        /* Font size control in toolbar */
+        .toolbar-input {
+            width: 60px;
+            height: 40px;
+            padding: 8px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .toolbar-input:focus {
+            outline: none;
+            border-color: #07778F;
+        }
+
+        .toolbar-color {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .toolbar-color:hover {
+            border-color: #07778F;
         }
 
         /* Tooltip */
@@ -1257,6 +1294,41 @@
                     <!-- Canvas with floating toolbar -->
                     <div id="canvas-wrapper">
                         <div class="floating-toolbar" id="floating-toolbar">
+                            <!-- Text-specific controls (shown only for text) -->
+                            <div id="text-toolbar-section" style="display: none; display: flex; gap: 8px; align-items: center;">
+                                <button class="toolbar-btn" id="toolbar-bold" onclick="toggleBold()" title="Bold">
+                                    <strong>B</strong>
+                                </button>
+                                <button class="toolbar-btn" id="toolbar-italic" onclick="toggleItalic()" title="Italic">
+                                    <em>I</em>
+                                </button>
+                                <button class="toolbar-btn" id="toolbar-underline" onclick="toggleUnderline()" title="Underline">
+                                    <u>U</u>
+                                </button>
+                                <button class="toolbar-btn" id="toolbar-align-left" onclick="setTextAlign('left')" title="Align Left">
+                                    ≡
+                                </button>
+                                <button class="toolbar-btn" id="toolbar-align-center" onclick="setTextAlign('center')" title="Align Center">
+                                    ≣
+                                </button>
+                                <button class="toolbar-btn" id="toolbar-align-right" onclick="setTextAlign('right')" title="Align Right">
+                                    ≡
+                                </button>
+                                <input type="number" class="toolbar-input" id="toolbar-fontsize" placeholder="Size" min="8" max="200" onchange="updateTextFromToolbar()" title="Font Size">
+                                <input type="color" class="toolbar-color" id="toolbar-color" onchange="updateTextFromToolbar()" title="Text Color">
+                                <div class="toolbar-divider"></div>
+                            </div>
+                            
+                            <!-- Image-specific controls (shown only for images) -->
+                            <div id="image-toolbar-section" style="display: none; display: flex; gap: 8px; align-items: center;">
+                                <button class="toolbar-btn" onclick="startCanvasCrop()" title="Crop">
+                                    ✂️
+                                    <div class="tooltip">Crop Image</div>
+                                </button>
+                                <div class="toolbar-divider"></div>
+                            </div>
+                            
+                            <!-- Common controls (shown for all) -->
                             <button class="toolbar-btn" onclick="bringToFront()" title="Bring to front">
                                 ⬆️
                                 <div class="tooltip">Bring Forward</div>
@@ -1279,6 +1351,10 @@
                                 <div class="tooltip">Flip Vertical</div>
                             </button>
                             <div class="toolbar-divider"></div>
+                            <button class="toolbar-btn" onclick="makeTemplateField()" title="Make template field" style="background: #28a745; color: white;">
+                                ✨
+                                <div class="tooltip">Make Template</div>
+                            </button>
                             <button class="toolbar-btn danger" onclick="deleteSelected()" title="Delete">
                                 🗑️
                                 <div class="tooltip">Delete (Del)</div>
@@ -1305,27 +1381,6 @@
                         <div class="empty-state-text">Go to the Design tab and click ✨ Template button on text or images</div>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Crop Modal -->
-    <div id="crop-modal" class="modal">
-        <div class="modal-content">
-            <h2>✂️ Crop Image</h2>
-            <p>Draw a rectangle to select the area you want to keep, then click Apply Crop.</p>
-            
-            <div style="border: 2px solid #ddd; border-radius: 10px; overflow: hidden; margin-bottom: 20px; background: #f8f9fa;">
-                <canvas id="crop-canvas"></canvas>
-            </div>
-            
-            <div class="btn-group">
-                <button class="btn btn-success" onclick="applyCrop()">
-                    ✅ Apply Crop
-                </button>
-                <button class="btn btn-secondary" onclick="closeCropModal()">
-                    ❌ Cancel
-                </button>
             </div>
         </div>
     </div>
@@ -1400,7 +1455,7 @@
             if (!selected) return;
 
             // Show floating toolbar
-            showFloatingToolbar();
+            showFloatingToolbar(selected);
 
             // Show appropriate properties panel
             if (selected.type === 'i-text' || selected.type === 'text') {
@@ -1412,8 +1467,47 @@
             }
         }
 
-        function showFloatingToolbar() {
-            document.getElementById('floating-toolbar').classList.add('visible');
+        function showFloatingToolbar(selected) {
+            const toolbar = document.getElementById('floating-toolbar');
+            const textSection = document.getElementById('text-toolbar-section');
+            const imageSection = document.getElementById('image-toolbar-section');
+            
+            // Hide all sections first
+            textSection.style.display = 'none';
+            imageSection.style.display = 'none';
+            
+            // Show relevant section based on selection type
+            if (selected.type === 'i-text' || selected.type === 'text') {
+                textSection.style.display = 'flex';
+                
+                // Update toolbar values for text
+                document.getElementById('toolbar-fontsize').value = selected.fontSize;
+                document.getElementById('toolbar-color').value = selected.fill;
+                
+                // Update button states
+                document.getElementById('toolbar-bold').classList.toggle('active', 
+                    selected.fontWeight === 'bold' || selected.fontWeight === 700);
+                document.getElementById('toolbar-italic').classList.toggle('active', 
+                    selected.fontStyle === 'italic');
+                document.getElementById('toolbar-underline').classList.toggle('active', 
+                    selected.underline === true);
+                    
+                // Update alignment buttons
+                document.getElementById('toolbar-align-left').classList.remove('active');
+                document.getElementById('toolbar-align-center').classList.remove('active');
+                document.getElementById('toolbar-align-right').classList.remove('active');
+                if (selected.textAlign === 'left') {
+                    document.getElementById('toolbar-align-left').classList.add('active');
+                } else if (selected.textAlign === 'center') {
+                    document.getElementById('toolbar-align-center').classList.add('active');
+                } else if (selected.textAlign === 'right') {
+                    document.getElementById('toolbar-align-right').classList.add('active');
+                }
+            } else if (selected.type === 'image') {
+                imageSection.style.display = 'flex';
+            }
+            
+            toolbar.classList.add('visible');
         }
 
         function hideFloatingToolbar() {
@@ -1486,6 +1580,24 @@
             document.getElementById('image-properties').style.display = 'none';
         }
 
+        function updateTextFromToolbar() {
+            const selected = canvas.getActiveObject();
+            if (!selected || (selected.type !== 'i-text' && selected.type !== 'text')) return;
+
+            selected.set({
+                fontSize: parseInt(document.getElementById('toolbar-fontsize').value),
+                fill: document.getElementById('toolbar-color').value
+            });
+
+            canvas.renderAll();
+            
+            // Also update sidebar if visible
+            if (document.getElementById('text-properties').style.display !== 'none') {
+                document.getElementById('text-size-edit').value = selected.fontSize;
+                document.getElementById('text-color-edit').value = selected.fill;
+            }
+        }
+
         function updateSelectedText() {
             const selected = canvas.getActiveObject();
             if (!selected || (selected.type !== 'i-text' && selected.type !== 'text')) return;
@@ -1509,7 +1621,10 @@
             const isBold = selected.fontWeight === 'bold' || selected.fontWeight === 700;
             selected.set('fontWeight', isBold ? 'normal' : 'bold');
             canvas.renderAll();
+            
+            // Update both sidebar and toolbar
             updateStyleButtons(selected);
+            document.getElementById('toolbar-bold').classList.toggle('active', !isBold);
         }
 
         function toggleItalic() {
@@ -1519,7 +1634,9 @@
             const isItalic = selected.fontStyle === 'italic';
             selected.set('fontStyle', isItalic ? 'normal' : 'italic');
             canvas.renderAll();
+            
             updateStyleButtons(selected);
+            document.getElementById('toolbar-italic').classList.toggle('active', !isItalic);
         }
 
         function toggleUnderline() {
@@ -1528,7 +1645,9 @@
             
             selected.set('underline', !selected.underline);
             canvas.renderAll();
+            
             updateStyleButtons(selected);
+            document.getElementById('toolbar-underline').classList.toggle('active', !!selected.underline);
         }
 
         function toggleLinethrough() {
@@ -1546,6 +1665,12 @@
             
             selected.set('textAlign', alignment);
             canvas.renderAll();
+            
+            // Update toolbar alignment buttons
+            document.getElementById('toolbar-align-left').classList.remove('active');
+            document.getElementById('toolbar-align-center').classList.remove('active');
+            document.getElementById('toolbar-align-right').classList.remove('active');
+            document.getElementById('toolbar-align-' + alignment).classList.add('active');
         }
 
         // Text shadow functions
@@ -2092,154 +2217,186 @@
             }
         }
 
-        // Crop functionality
-        let cropImage;
-        let cropRect;
-        let isDragging = false;
-        let startX, startY;
+        // Canvas-based crop (like Canva)
+        let cropMode = false;
+        let cropTarget = null;
+        let cropRect = null;
 
         function cropSelectedImage() {
+            startCanvasCrop();
+        }
+
+        function startCanvasCrop() {
             const selected = canvas.getActiveObject();
-            
             if (!selected || selected.type !== 'image') {
                 alert('Please select an image to crop');
                 return;
             }
 
-            cropImage = selected;
-            document.getElementById('crop-modal').classList.add('active');
+            // Enter crop mode
+            cropMode = true;
+            cropTarget = selected;
             
-            const cropCanvasEl = document.getElementById('crop-canvas');
-            const imgElement = selected.getElement();
+            // Disable other interactions
+            canvas.selection = false;
+            canvas.getObjects().forEach(obj => {
+                if (obj !== selected) {
+                    obj.selectable = false;
+                    obj.evented = false;
+                }
+            });
             
-            cropCanvasEl.width = selected.width * selected.scaleX;
-            cropCanvasEl.height = selected.height * selected.scaleY;
+            // Make target non-moveable during crop
+            selected.set({
+                lockMovementX: true,
+                lockMovementY: true,
+                lockRotation: true,
+                lockScalingX: true,
+                lockScalingY: true,
+                hasControls: false
+            });
             
-            const ctx = cropCanvasEl.getContext('2d');
-            ctx.drawImage(imgElement, 0, 0, cropCanvasEl.width, cropCanvasEl.height);
+            // Create crop rectangle overlay
+            const imgBounds = selected.getBoundingRect();
+            cropRect = new fabric.Rect({
+                left: imgBounds.left,
+                top: imgBounds.top,
+                width: imgBounds.width,
+                height: imgBounds.height,
+                fill: 'transparent',
+                stroke: '#07778F',
+                strokeWidth: 3,
+                strokeDashArray: [5, 5],
+                cornerColor: '#07778F',
+                cornerSize: 12,
+                transparentCorners: false,
+                lockRotation: true,
+                selectable: true,
+                hasRotatingPoint: false
+            });
             
-            cropRect = {
-                x: 0,
-                y: 0,
-                width: cropCanvasEl.width,
-                height: cropCanvasEl.height
-            };
+            canvas.add(cropRect);
+            canvas.setActiveObject(cropRect);
+            canvas.renderAll();
             
-            cropCanvasEl.onmousedown = startCrop;
-            cropCanvasEl.onmousemove = updateCrop;
-            cropCanvasEl.onmouseup = endCrop;
-            
-            drawCropOverlay();
+            // Show crop UI
+            showCropUI();
         }
 
-        function startCrop(e) {
-            const rect = e.target.getBoundingClientRect();
-            startX = e.clientX - rect.left;
-            startY = e.clientY - rect.top;
-            isDragging = true;
+        function showCropUI() {
+            const toolbar = document.getElementById('floating-toolbar');
+            toolbar.innerHTML = `
+                <button class="btn btn-success" onclick="applyCropDirect()" style="padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 600;">
+                    ✅ Apply Crop
+                </button>
+                <button class="btn btn-secondary" onclick="cancelCrop()" style="padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; margin-left: 10px;">
+                    ❌ Cancel
+                </button>
+                <div style="margin-left: 15px; font-size: 13px; color: #666; font-weight: 600;">
+                    Drag the corners to adjust crop area
+                </div>
+            `;
         }
 
-        function updateCrop(e) {
-            if (!isDragging) return;
+        function applyCropDirect() {
+            if (!cropMode || !cropTarget || !cropRect) return;
             
-            const rect = e.target.getBoundingClientRect();
-            const currentX = e.clientX - rect.left;
-            const currentY = e.clientY - rect.top;
-            
-            cropRect = {
-                x: Math.min(startX, currentX),
-                y: Math.min(startY, currentY),
-                width: Math.abs(currentX - startX),
-                height: Math.abs(currentY - startY)
-            };
-            
-            drawCropOverlay();
-        }
-
-        function endCrop() {
-            isDragging = false;
-        }
-
-        function drawCropOverlay() {
-            const cropCanvasEl = document.getElementById('crop-canvas');
-            const ctx = cropCanvasEl.getContext('2d');
-            const imgElement = cropImage.getElement();
-            
-            ctx.clearRect(0, 0, cropCanvasEl.width, cropCanvasEl.height);
-            ctx.drawImage(imgElement, 0, 0, cropCanvasEl.width, cropCanvasEl.height);
-            
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-            ctx.fillRect(0, 0, cropCanvasEl.width, cropCanvasEl.height);
-            
-            ctx.clearRect(cropRect.x, cropRect.y, cropRect.width, cropRect.height);
-            ctx.drawImage(imgElement, 
-                cropRect.x, cropRect.y, cropRect.width, cropRect.height,
-                cropRect.x, cropRect.y, cropRect.width, cropRect.height
-            );
-            
-            ctx.strokeStyle = '#07778F';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(cropRect.x, cropRect.y, cropRect.width, cropRect.height);
-        }
-
-        function applyCrop() {
-            if (!cropImage || cropRect.width < 10 || cropRect.height < 10) {
-                alert('Please draw a crop area');
-                return;
-            }
-
             showLoading('Cropping image...');
             
+            const img = cropTarget;
+            const crop = cropRect.getBoundingRect();
+            const imgBounds = img.getBoundingRect();
+            
+            // Calculate crop area relative to image
+            const relX = (crop.left - imgBounds.left) / img.scaleX;
+            const relY = (crop.top - imgBounds.top) / img.scaleY;
+            const relWidth = crop.width / img.scaleX;
+            const relHeight = crop.height / img.scaleY;
+            
+            // Create temporary canvas for cropped image
             const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = cropRect.width;
-            tempCanvas.height = cropRect.height;
+            tempCanvas.width = relWidth;
+            tempCanvas.height = relHeight;
             const tempCtx = tempCanvas.getContext('2d');
             
-            const imgElement = cropImage.getElement();
-            const scaleX = imgElement.width / (cropImage.width * cropImage.scaleX);
-            const scaleY = imgElement.height / (cropImage.height * cropImage.scaleY);
-            
+            const imgElement = img.getElement();
             tempCtx.drawImage(imgElement,
-                cropRect.x * scaleX, cropRect.y * scaleY,
-                cropRect.width * scaleX, cropRect.height * scaleY,
-                0, 0, cropRect.width, cropRect.height
+                relX, relY, relWidth, relHeight,
+                0, 0, relWidth, relHeight
             );
             
+            // Create new fabric image from cropped canvas
             fabric.Image.fromURL(tempCanvas.toDataURL(), function(newImg) {
                 newImg.set({
-                    left: cropImage.left,
-                    top: cropImage.top,
-                    angle: cropImage.angle,
-                    templateField: cropImage.templateField,
-                    templateType: cropImage.templateType
+                    left: crop.left,
+                    top: crop.top,
+                    scaleX: img.scaleX,
+                    scaleY: img.scaleY,
+                    angle: img.angle,
+                    templateField: img.templateField,
+                    templateType: img.templateType
                 });
                 
-                if (cropImage.templateField) {
+                if (img.templateField) {
                     newImg.set({
                         stroke: '#07778F',
                         strokeWidth: 3
                     });
                     
-                    const field = templateFields.find(f => f.object === cropImage);
+                    const field = templateFields.find(f => f.object === img);
                     if (field) {
                         field.object = newImg;
                     }
                 }
                 
-                canvas.remove(cropImage);
+                canvas.remove(img);
                 canvas.add(newImg);
-                canvas.setActiveObject(newImg);
-                canvas.renderAll();
                 
-                closeCropModal();
+                exitCropMode();
+                canvas.setActiveObject(newImg);
                 hideLoading();
             });
         }
 
-        function closeCropModal() {
-            document.getElementById('crop-modal').classList.remove('active');
-            cropImage = null;
-            cropRect = null;
+        function cancelCrop() {
+            exitCropMode();
+        }
+
+        function exitCropMode() {
+            if (cropRect) {
+                canvas.remove(cropRect);
+                cropRect = null;
+            }
+            
+            if (cropTarget) {
+                cropTarget.set({
+                    lockMovementX: false,
+                    lockMovementY: false,
+                    lockRotation: false,
+                    lockScalingX: false,
+                    lockScalingY: false,
+                    hasControls: true
+                });
+            }
+            
+            // Re-enable interactions
+            canvas.selection = true;
+            canvas.getObjects().forEach(obj => {
+                obj.selectable = true;
+                obj.evented = true;
+            });
+            
+            cropMode = false;
+            cropTarget = null;
+            
+            canvas.renderAll();
+            
+            // Restore normal toolbar
+            if (canvas.getActiveObject()) {
+                handleSelection({ target: canvas.getActiveObject() });
+            } else {
+                hideFloatingToolbar();
+            }
         }
 
         // Download
