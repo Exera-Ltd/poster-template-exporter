@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BatchPoster Pro - by Exera</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@imgly/background-removal-web@0.1.0/dist/index.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
@@ -532,35 +533,34 @@
                         <div class="section-title">📝 Add Text</div>
                         <div class="form-group">
                             <label>Text Content</label>
-                            <input type="text" id="text-content" placeholder="Enter text">
+                            <input type="text" id="text-content" placeholder="Enter text or leave blank for placeholder">
                         </div>
-                        <div class="form-group">
-                            <label>Font Family</label>
-                            <select id="text-font">
-                                <option value="Arial">Arial</option>
-                                <option value="Helvetica">Helvetica</option>
-                                <option value="Times New Roman">Times New Roman</option>
-                                <option value="Courier New">Courier New</option>
-                                <option value="Georgia">Georgia</option>
-                                <option value="Verdana">Verdana</option>
-                                <option value="Impact">Impact</option>
-                                <option value="Comic Sans MS">Comic Sans MS</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Font Size</label>
-                            <input type="number" id="text-size" value="30" min="8" max="200">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label>Font</label>
+                                <select id="text-font">
+                                    <option value="Arial">Arial</option>
+                                    <option value="Helvetica">Helvetica</option>
+                                    <option value="Times New Roman">Times</option>
+                                    <option value="Georgia">Georgia</option>
+                                    <option value="Verdana">Verdana</option>
+                                    <option value="Impact">Impact</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label>Size</label>
+                                <input type="number" id="text-size" value="30" min="8" max="200">
+                            </div>
                         </div>
                         <div class="form-group">
                             <label>Color</label>
                             <input type="color" id="text-color" value="#000000">
                         </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="text-template">
-                            <label for="text-template">Make this a template field</label>
-                        </div>
-                        <button class="btn btn-primary" onclick="addText()">
-                            ➕ Add Text
+                        <button class="btn btn-primary" onclick="addText(false)">
+                            ➕ Add Normal Text
+                        </button>
+                        <button class="btn btn-success" onclick="addText(true)" style="margin-top: 8px;">
+                            ✨ Add as Template Field
                         </button>
                     </div>
 
@@ -570,12 +570,22 @@
                             📤 Upload Image
                         </label>
                         <input type="file" id="img-upload" accept="image/*">
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="img-template">
-                            <label for="img-template">Make this a template field</label>
+                        <div style="display: flex; gap: 8px; margin-top: 12px;">
+                            <button class="btn btn-primary" onclick="triggerImageUpload(false)" style="flex: 1; font-size: 12px; padding: 10px;">
+                                Add Normal
+                            </button>
+                            <button class="btn btn-success" onclick="triggerImageUpload(true)" style="flex: 1; font-size: 12px; padding: 10px;">
+                                Add Template
+                            </button>
+                        </div>
+                        <div style="margin-top: 12px; padding: 10px; background: #fff3cd; border-radius: 6px; border-left: 3px solid #ffc107;">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12px; color: #856404;">
+                                <input type="checkbox" id="img-remove-bg" style="width: 16px; height: 16px;">
+                                <span>🎨 Remove background (AI, 10-30s)</span>
+                            </label>
                         </div>
                         <p style="font-size: 11px; color: #666; margin-top: 10px; padding: 8px; background: #f0f2ff; border-radius: 6px;">
-                            💡 <strong>Tip:</strong> Use <a href="https://www.remove.bg" target="_blank" style="color: #667eea;">remove.bg</a> or <a href="https://photoscissors.com" target="_blank" style="color: #667eea;">PhotoScissors</a> to remove backgrounds before uploading!
+                            💡 <strong>Alternatives:</strong> <a href="https://www.remove.bg" target="_blank" style="color: #667eea;">remove.bg</a> | <a href="https://photoscissors.com" target="_blank" style="color: #667eea;">PhotoScissors</a>
                         </p>
                     </div>
 
@@ -706,12 +716,11 @@
         });
 
         // Add text
-        function addText() {
+        function addText(isTemplate) {
             const content = document.getElementById('text-content').value || 'Sample Text';
             const font = document.getElementById('text-font').value;
             const size = parseInt(document.getElementById('text-size').value);
             const color = document.getElementById('text-color').value;
-            const isTemplate = document.getElementById('text-template').checked;
 
             const text = new fabric.IText(content, {
                 left: 100,
@@ -723,7 +732,7 @@
             });
 
             if (isTemplate) {
-                const fieldName = prompt('Enter a name for this template field:', 'text_' + (templateFields.length + 1));
+                const fieldName = prompt('Enter a name for this template field:', content || 'text_' + (templateFields.length + 1));
                 if (fieldName) {
                     text.templateField = fieldName;
                     text.templateType = 'text';
@@ -748,7 +757,14 @@
             canvas.renderAll();
 
             document.getElementById('text-content').value = '';
-            document.getElementById('text-template').checked = false;
+        }
+
+        // Trigger image upload with template option
+        let pendingImageTemplate = false;
+        
+        function triggerImageUpload(asTemplate) {
+            pendingImageTemplate = asTemplate;
+            document.getElementById('img-upload').click();
         }
 
         // Upload and add image
@@ -756,12 +772,28 @@
             const file = e.target.files[0];
             if (!file) return;
 
-            const isTemplate = document.getElementById('img-template').checked;
+            const isTemplate = pendingImageTemplate;
+            const removeBg = document.getElementById('img-remove-bg').checked;
+            pendingImageTemplate = false;
 
             showLoading('Loading image...');
 
             try {
-                const imageUrl = URL.createObjectURL(file);
+                let imageUrl;
+
+                if (removeBg && typeof removeBackground !== 'undefined') {
+                    updateLoadingText('Removing background with AI (this may take 10-30 seconds)...');
+                    try {
+                        const blob = await removeBackground(file);
+                        imageUrl = URL.createObjectURL(blob);
+                    } catch (bgError) {
+                        console.error('Background removal failed:', bgError);
+                        alert('Background removal failed. Using original image instead.\n\nTry: 1) Smaller image, 2) External tools like remove.bg');
+                        imageUrl = URL.createObjectURL(file);
+                    }
+                } else {
+                    imageUrl = URL.createObjectURL(file);
+                }
 
                 fabric.Image.fromURL(imageUrl, function(img) {
                     img.scaleToWidth(200);
@@ -802,7 +834,7 @@
                 hideLoading();
             }
 
-            document.getElementById('img-template').checked = false;
+            document.getElementById('img-remove-bg').checked = false;
             e.target.value = '';
         });
 
@@ -839,12 +871,36 @@
                 height: canvas.height
             };
 
+            // Temporarily remove blue strokes from template fields
+            const templateObjects = canvas.getObjects().filter(obj => obj.templateField);
+            const originalStrokes = [];
+            
+            templateObjects.forEach(obj => {
+                originalStrokes.push({
+                    obj: obj,
+                    stroke: obj.stroke,
+                    strokeWidth: obj.strokeWidth
+                });
+                obj.set({ stroke: null, strokeWidth: 0 });
+            });
+            
+            canvas.renderAll();
+
             const dataURL = canvas.toDataURL({
                 format: 'png',
                 quality: 1,
                 multiplier: exportDimensions.width / canvas.width
             });
             
+            // Restore blue strokes
+            originalStrokes.forEach(item => {
+                item.obj.set({ 
+                    stroke: item.stroke, 
+                    strokeWidth: item.strokeWidth 
+                });
+            });
+            canvas.renderAll();
+
             const link = document.createElement('a');
             link.download = 'poster_' + Date.now() + '.png';
             link.href = dataURL;
@@ -1014,10 +1070,33 @@
 
                     // Wait a bit for rendering
                     setTimeout(() => {
+                        // Temporarily remove blue strokes from template fields
+                        const templateObjects = canvas.getObjects().filter(obj => obj.templateField);
+                        const originalStrokes = [];
+                        
+                        templateObjects.forEach(obj => {
+                            originalStrokes.push({
+                                obj: obj,
+                                stroke: obj.stroke,
+                                strokeWidth: obj.strokeWidth
+                            });
+                            obj.set({ stroke: null, strokeWidth: 0 });
+                        });
+                        
+                        canvas.renderAll();
+
                         const dataURL = canvas.toDataURL({
                             format: 'png',
                             quality: 1,
                             multiplier: exportDimensions.width / canvas.width
+                        });
+
+                        // Restore blue strokes
+                        originalStrokes.forEach(item => {
+                            item.obj.set({ 
+                                stroke: item.stroke, 
+                                strokeWidth: item.strokeWidth 
+                            });
                         });
 
                         // Convert to blob
