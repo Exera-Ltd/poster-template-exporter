@@ -226,6 +226,8 @@
             border-radius: 12px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.1);
             background: white;
+            display: inline-block;
+            overflow: hidden;
         }
 
         /* Floating toolbar for selected objects */
@@ -1662,12 +1664,13 @@
             const reader = new FileReader();
             reader.onload = function(event) {
                 fabric.Image.fromURL(event.target.result, function(img) {
+                    // Store the ACTUAL dimensions
                     backgroundImageDimensions = {
                         width: img.width,
                         height: img.height
                     };
 
-                    // Set actual canvas dimensions to match image
+                    // Set canvas to actual dimensions
                     canvas.setDimensions({
                         width: img.width,
                         height: img.height
@@ -1683,7 +1686,7 @@
                     img.selectable = false;
                     canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas));
                     
-                    // Now scale the viewport to fit the container (like Canva)
+                    // Now scale the VIEWPORT to fit the container (like Canva)
                     fitCanvasToView();
                     
                     hideLoading();
@@ -1696,62 +1699,55 @@
         }
 
         function fitCanvasToView() {
-            const container = document.getElementById('canvas-container');
             const canvasArea = document.querySelector('.canvas-area');
             
             // Get available space (with some padding)
             const maxWidth = canvasArea.clientWidth - 50;
-            const maxHeight = window.innerHeight - 300; // Account for header and controls
+            const maxHeight = window.innerHeight - 300;
+            
+            // Get actual canvas dimensions
+            const actualWidth = canvas.getWidth();
+            const actualHeight = canvas.getHeight();
             
             // Calculate scale to fit
-            const scaleX = maxWidth / canvas.width;
-            const scaleY = maxHeight / canvas.height;
-            const scale = Math.min(scaleX, scaleY, 1); // Never scale up, only down
+            const scaleX = maxWidth / actualWidth;
+            const scaleY = maxHeight / actualHeight;
+            const scale = Math.min(scaleX, scaleY, 1); // Never scale up
             
-            if (scale < 1) {
-                // Apply zoom to fit
-                canvas.setZoom(scale);
-                
-                // Update container size to match scaled canvas
-                container.style.width = (canvas.width * scale) + 'px';
-                container.style.height = (canvas.height * scale) + 'px';
-                
-                canvas.renderAll();
-            } else {
-                // Canvas fits naturally
-                canvas.setZoom(1);
-                container.style.width = canvas.width + 'px';
-                container.style.height = canvas.height + 'px';
-            }
+            // Apply viewport transform
+            canvas.setZoom(scale);
+            canvas.setWidth(actualWidth * scale);
+            canvas.setHeight(actualHeight * scale);
             
+            canvas.renderAll();
             updateZoomDisplay();
         }
 
         function zoomIn() {
-            let currentZoom = canvas.getZoom();
-            currentZoom = currentZoom * 1.2;
-            if (currentZoom > 5) currentZoom = 5; // Max 500%
+            const currentZoom = canvas.getZoom();
+            const newZoom = Math.min(currentZoom * 1.2, 5); // Max 500%
             
-            canvas.setZoom(currentZoom);
+            const actualWidth = canvas.getWidth() / currentZoom;
+            const actualHeight = canvas.getHeight() / currentZoom;
             
-            const container = document.getElementById('canvas-container');
-            container.style.width = (canvas.width * currentZoom) + 'px';
-            container.style.height = (canvas.height * currentZoom) + 'px';
+            canvas.setZoom(newZoom);
+            canvas.setWidth(actualWidth * newZoom);
+            canvas.setHeight(actualHeight * newZoom);
             
             canvas.renderAll();
             updateZoomDisplay();
         }
 
         function zoomOut() {
-            let currentZoom = canvas.getZoom();
-            currentZoom = currentZoom / 1.2;
-            if (currentZoom < 0.1) currentZoom = 0.1; // Min 10%
+            const currentZoom = canvas.getZoom();
+            const newZoom = Math.max(currentZoom / 1.2, 0.1); // Min 10%
             
-            canvas.setZoom(currentZoom);
+            const actualWidth = canvas.getWidth() / currentZoom;
+            const actualHeight = canvas.getHeight() / currentZoom;
             
-            const container = document.getElementById('canvas-container');
-            container.style.width = (canvas.width * currentZoom) + 'px';
-            container.style.height = (canvas.height * currentZoom) + 'px';
+            canvas.setZoom(newZoom);
+            canvas.setWidth(actualWidth * newZoom);
+            canvas.setHeight(actualHeight * newZoom);
             
             canvas.renderAll();
             updateZoomDisplay();
@@ -1774,6 +1770,9 @@
                 alert('Canvas dimensions must be between 100 and 5000 pixels');
                 return;
             }
+            
+            // Reset zoom first
+            canvas.setZoom(1);
             
             canvas.setDimensions({
                 width: width,
@@ -2245,9 +2244,14 @@
 
         // Download
         function downloadSingle() {
+            // Get the actual canvas dimensions (not viewport)
+            const currentZoom = canvas.getZoom();
+            const actualWidth = canvas.getWidth() / currentZoom;
+            const actualHeight = canvas.getHeight() / currentZoom;
+            
             const exportDimensions = backgroundImageDimensions || {
-                width: canvas.width,
-                height: canvas.height
+                width: actualWidth,
+                height: actualHeight
             };
 
             const templateObjects = canvas.getObjects().filter(obj => obj.templateField);
@@ -2264,10 +2268,12 @@
             
             canvas.renderAll();
 
+            // Export at actual size, not viewport size
+            const multiplier = exportDimensions.width / actualWidth;
             const dataURL = canvas.toDataURL({
                 format: 'png',
                 quality: 1,
-                multiplier: exportDimensions.width / canvas.width
+                multiplier: multiplier
             });
             
             originalStrokes.forEach(item => {
@@ -2426,9 +2432,14 @@
             const zip = new JSZip();
             const promises = [];
 
+            // Get actual canvas dimensions (not viewport)
+            const currentZoom = canvas.getZoom();
+            const actualWidth = canvas.getWidth() / currentZoom;
+            const actualHeight = canvas.getHeight() / currentZoom;
+            
             const exportDimensions = backgroundImageDimensions || {
-                width: canvas.width,
-                height: canvas.height
+                width: actualWidth,
+                height: actualHeight
             };
 
             for (let i = 0; i < bulkData.length; i++) {
@@ -2480,10 +2491,12 @@
                         
                         canvas.renderAll();
 
+                        // Export at actual size, not viewport size
+                        const multiplier = exportDimensions.width / actualWidth;
                         const dataURL = canvas.toDataURL({
                             format: 'png',
                             quality: 1,
-                            multiplier: exportDimensions.width / canvas.width
+                            multiplier: multiplier
                         });
 
                         originalStrokes.forEach(item => {
