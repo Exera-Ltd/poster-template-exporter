@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Poster Template Creator</title>
+    <title>BatchPoster Pro - by Exera</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/dist/index.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/dist/index.umd.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
@@ -326,6 +326,133 @@
             cursor: pointer;
         }
 
+        .header-logo {
+            transition: opacity 0.3s ease;
+        }
+
+        .header-logo.hidden {
+            display: none;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid #ddd;
+            padding: 0 20px;
+        }
+
+        .tab {
+            padding: 15px 30px;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            font-size: 15px;
+            font-weight: 600;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .tab:hover {
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            background: white;
+        }
+
+        .tab-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #667eea;
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 25px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .bulk-data-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .bulk-data-table {
+            width: 100%;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .bulk-data-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .bulk-data-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .bulk-data-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .bulk-data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .bulk-data-table input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .bulk-data-table input[type="file"] {
+            font-size: 12px;
+        }
+
+        .bulk-data-table button {
+            padding: 6px 12px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .bulk-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
         @media (max-width: 768px) {
             .sidebar {
                 flex: 0 0 100%;
@@ -345,6 +472,21 @@
             .btn {
                 width: 100%;
             }
+
+            .tabs {
+                overflow-x: auto;
+                padding: 0 10px;
+            }
+
+            .tab {
+                padding: 12px 20px;
+                font-size: 14px;
+                white-space: nowrap;
+            }
+
+            .bulk-data-table {
+                overflow-x: auto;
+            }
         }
 
         .icon {
@@ -356,118 +498,126 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎨 Poster Template Creator</h1>
-            <p>Design once, export multiple variations with different data</p>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 10px;">
+                <img src="logo1.svg" alt="Exera Logo 1" class="header-logo" id="logo1" style="height: 50px; object-fit: contain;">
+                <img src="logo2.svg" alt="Exera Logo 2" class="header-logo" id="logo2" style="height: 50px; object-fit: contain;">
+            </div>
+            <h1>BatchPoster Pro</h1>
+            <p style="font-size: 12px; opacity: 0.8; margin-bottom: 5px;">Proudly by Exera</p>
+            <p>Design once, export hundreds with different data</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('design')">
+                🎨 Design
+            </button>
+            <button class="tab" onclick="switchTab('bulk')" id="bulk-tab">
+                📦 Bulk Export
+                <span class="tab-badge" id="template-count">0</span>
+            </button>
         </div>
 
         <div class="main-content">
-            <div class="sidebar">
-                <div class="section">
-                    <div class="section-title">📁 Background</div>
-                    <label for="bg-upload" class="file-label">
-                        📤 Upload Background Image
-                    </label>
-                    <input type="file" id="bg-upload" accept="image/*">
+            <!-- Design Tab -->
+            <div id="design-tab" class="tab-content active" style="display: flex; flex-wrap: wrap; width: 100%;">
+                <div class="sidebar">
+                    <div class="section">
+                        <div class="section-title">📁 Background</div>
+                        <label for="bg-upload" class="file-label">
+                            📤 Upload Background Image
+                        </label>
+                        <input type="file" id="bg-upload" accept="image/*">
+                    </div>
+
+                    <div class="section">
+                        <div class="section-title">📝 Add Text</div>
+                        <div class="form-group">
+                            <label>Text Content</label>
+                            <input type="text" id="text-content" placeholder="Enter text">
+                        </div>
+                        <div class="form-group">
+                            <label>Font Family</label>
+                            <select id="text-font">
+                                <option value="Arial">Arial</option>
+                                <option value="Helvetica">Helvetica</option>
+                                <option value="Times New Roman">Times New Roman</option>
+                                <option value="Courier New">Courier New</option>
+                                <option value="Georgia">Georgia</option>
+                                <option value="Verdana">Verdana</option>
+                                <option value="Impact">Impact</option>
+                                <option value="Comic Sans MS">Comic Sans MS</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Font Size</label>
+                            <input type="number" id="text-size" value="30" min="8" max="200">
+                        </div>
+                        <div class="form-group">
+                            <label>Color</label>
+                            <input type="color" id="text-color" value="#000000">
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="text-template">
+                            <label for="text-template">Make this a template field</label>
+                        </div>
+                        <button class="btn btn-primary" onclick="addText()">
+                            ➕ Add Text
+                        </button>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-title">🖼️ Add Image</div>
+                        <label for="img-upload" class="file-label">
+                            📤 Upload Image
+                        </label>
+                        <input type="file" id="img-upload" accept="image/*">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="img-remove-bg">
+                            <label for="img-remove-bg">Remove background (AI)</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="img-template">
+                            <label for="img-template">Make this a template field</label>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-title">🎯 Actions</div>
+                        <button class="btn btn-secondary" onclick="deleteSelected()">
+                            🗑️ Delete Selected
+                        </button>
+                        <button class="btn btn-danger" onclick="clearCanvas()">
+                            🔄 Clear All
+                        </button>
+                    </div>
                 </div>
 
-                <div class="section">
-                    <div class="section-title">📝 Add Text</div>
-                    <div class="form-group">
-                        <label>Text Content</label>
-                        <input type="text" id="text-content" placeholder="Enter text">
+                <div class="canvas-area">
+                    <div id="canvas-container">
+                        <canvas id="canvas"></canvas>
                     </div>
-                    <div class="form-group">
-                        <label>Font Family</label>
-                        <select id="text-font">
-                            <option value="Arial">Arial</option>
-                            <option value="Helvetica">Helvetica</option>
-                            <option value="Times New Roman">Times New Roman</option>
-                            <option value="Courier New">Courier New</option>
-                            <option value="Georgia">Georgia</option>
-                            <option value="Verdana">Verdana</option>
-                            <option value="Impact">Impact</option>
-                            <option value="Comic Sans MS">Comic Sans MS</option>
-                        </select>
+                    <div class="controls">
+                        <button class="btn btn-primary" onclick="downloadSingle()">
+                            💾 Download Current
+                        </button>
                     </div>
-                    <div class="form-group">
-                        <label>Font Size</label>
-                        <input type="number" id="text-size" value="30" min="8" max="200">
-                    </div>
-                    <div class="form-group">
-                        <label>Color</label>
-                        <input type="color" id="text-color" value="#000000">
-                    </div>
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="text-template">
-                        <label for="text-template">Make this a template field</label>
-                    </div>
-                    <button class="btn btn-primary" onclick="addText()">
-                        ➕ Add Text
-                    </button>
-                </div>
-
-                <div class="section">
-                    <div class="section-title">🖼️ Add Image</div>
-                    <label for="img-upload" class="file-label">
-                        📤 Upload Image
-                    </label>
-                    <input type="file" id="img-upload" accept="image/*">
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="img-remove-bg">
-                        <label for="img-remove-bg">Remove background (AI)</label>
-                    </div>
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="img-template">
-                        <label for="img-template">Make this a template field</label>
-                    </div>
-                </div>
-
-                <div class="section">
-                    <div class="section-title">🎯 Actions</div>
-                    <button class="btn btn-secondary" onclick="deleteSelected()">
-                        🗑️ Delete Selected
-                    </button>
-                    <button class="btn btn-success" onclick="openBulkExport()">
-                        📦 Bulk Export Templates
-                    </button>
-                    <button class="btn btn-danger" onclick="clearCanvas()">
-                        🔄 Clear All
-                    </button>
                 </div>
             </div>
 
-            <div class="canvas-area">
-                <div id="canvas-container">
-                    <canvas id="canvas"></canvas>
+            <!-- Bulk Export Tab -->
+            <div id="bulk-tab-content" class="tab-content" style="width: 100%; max-width: 1200px; margin: 0 auto;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <h2 style="color: #333; margin-bottom: 10px;">📦 Bulk Export Templates</h2>
+                    <p style="color: #666;">Fill in data for each template field. Each row creates a new poster.</p>
                 </div>
-                <div class="controls">
-                    <button class="btn btn-primary" onclick="downloadSingle()">
-                        💾 Download Current
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Bulk Export Modal -->
-    <div id="bulk-modal" class="modal">
-        <div class="modal-content">
-            <h2>📦 Bulk Export Templates</h2>
-            <p style="margin-bottom: 20px; color: #666;">Fill in data for each template field. Each row creates a new poster.</p>
-            
-            <div id="template-fields"></div>
-            
-            <button class="btn btn-primary" onclick="addDataRow()" style="margin-top: 15px;">
-                ➕ Add Row
-            </button>
-            
-            <div style="display: flex; gap: 10px; margin-top: 25px;">
-                <button class="btn btn-success" onclick="generateBulk()">
-                    🚀 Generate & Download All
-                </button>
-                <button class="btn btn-secondary" onclick="closeBulkExport()">
-                    ❌ Cancel
-                </button>
+                <div id="bulk-content">
+                    <div style="text-align: center; padding: 60px 20px; color: #999;">
+                        <div style="font-size: 60px; margin-bottom: 20px;">📋</div>
+                        <p style="font-size: 18px; margin-bottom: 10px;">No template fields yet</p>
+                        <p>Go to the Design tab and mark text or images as "template fields"</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -482,6 +632,29 @@
         let canvas;
         let templateFields = [];
         let bulkData = [{}];
+        let backgroundImageDimensions = null;
+
+        // Tab switching
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            // Show selected tab
+            if (tabName === 'design') {
+                document.querySelector('.tab[onclick*="design"]').classList.add('active');
+                document.getElementById('design-tab').classList.add('active');
+            } else if (tabName === 'bulk') {
+                document.querySelector('.tab[onclick*="bulk"]').classList.add('active');
+                document.getElementById('bulk-tab-content').classList.add('active');
+                renderBulkExportInterface();
+            }
+        }
+
+        // Update template count badge
+        function updateTemplateCount() {
+            document.getElementById('template-count').textContent = templateFields.length;
+        }
 
         // Initialize canvas
         function initCanvas() {
@@ -518,6 +691,13 @@
             const reader = new FileReader();
             reader.onload = function(event) {
                 fabric.Image.fromURL(event.target.result, function(img) {
+                    // Store original dimensions for export
+                    backgroundImageDimensions = {
+                        width: img.width,
+                        height: img.height
+                    };
+
+                    // Scale to canvas
                     img.scaleToWidth(canvas.width);
                     img.scaleToHeight(canvas.height);
                     img.selectable = false;
@@ -560,6 +740,8 @@
                         stroke: '#667eea',
                         strokeWidth: 2
                     });
+
+                    updateTemplateCount();
                 }
             }
 
@@ -585,8 +767,10 @@
                 let imageUrl;
 
                 if (removeBg) {
-                    updateLoadingText('Removing background with AI...');
-                    const blob = await window.removeBackground(file);
+                    updateLoadingText('Removing background with AI (this may take a moment)...');
+                    
+                    // Use the correct API from @imgly/background-removal
+                    const blob = await imglyRemoveBackground(file);
                     imageUrl = URL.createObjectURL(blob);
                 } else {
                     imageUrl = URL.createObjectURL(file);
@@ -615,6 +799,8 @@
                                 stroke: '#667eea',
                                 strokeWidth: 3
                             });
+
+                            updateTemplateCount();
                         }
                     }
 
@@ -625,7 +811,7 @@
                 });
             } catch (error) {
                 console.error('Error processing image:', error);
-                alert('Error processing image. Please try again.');
+                alert('Error processing image: ' + error.message + '\n\nTry without background removal or use a smaller image.');
                 hideLoading();
             }
 
@@ -641,6 +827,7 @@
                 // Remove from template fields if it's a template
                 if (activeObject.templateField) {
                     templateFields = templateFields.filter(f => f.object !== activeObject);
+                    updateTemplateCount();
                 }
                 canvas.remove(activeObject);
                 canvas.renderAll();
@@ -654,14 +841,22 @@
                 canvas.backgroundColor = '#ffffff';
                 templateFields = [];
                 bulkData = [{}];
+                backgroundImageDimensions = null;
+                updateTemplateCount();
             }
         }
 
         // Download single poster
         function downloadSingle() {
+            const exportDimensions = backgroundImageDimensions || {
+                width: canvas.width,
+                height: canvas.height
+            };
+
             const dataURL = canvas.toDataURL({
                 format: 'png',
-                quality: 1
+                quality: 1,
+                multiplier: exportDimensions.width / canvas.width
             });
             
             const link = document.createElement('a');
@@ -670,87 +865,106 @@
             link.click();
         }
 
-        // Open bulk export modal
-        function openBulkExport() {
+        // Render bulk export interface in tab
+        function renderBulkExportInterface() {
+            const bulkContent = document.getElementById('bulk-content');
+
             if (templateFields.length === 0) {
-                alert('No template fields found! Add text or images and check "Make this a template field" to create templates.');
+                bulkContent.innerHTML = `
+                    <div style="text-align: center; padding: 60px 20px; color: #999;">
+                        <div style="font-size: 60px; margin-bottom: 20px;">📋</div>
+                        <p style="font-size: 18px; margin-bottom: 10px;">No template fields yet</p>
+                        <p>Go to the Design tab and mark text or images as "template fields"</p>
+                    </div>
+                `;
                 return;
             }
 
-            const modal = document.getElementById('bulk-modal');
-            const fieldsContainer = document.getElementById('template-fields');
-            
-            fieldsContainer.innerHTML = '';
-            
+            let tableHTML = `
+                <div class="bulk-data-section">
+                    <h3 style="margin-bottom: 15px; color: #333;">Template Data</h3>
+                    <p style="color: #666; margin-bottom: 20px;">Each row will generate one poster. Fill in the data for each template field.</p>
+                    
+                    <div class="bulk-data-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">#</th>
+            `;
+
+            // Add column headers for each template field
             templateFields.forEach(field => {
-                const item = document.createElement('div');
-                item.className = 'template-item';
-                item.innerHTML = `
-                    <strong>${field.name}</strong>
-                    <div id="data-container-${field.name}"></div>
-                `;
-                fieldsContainer.appendChild(item);
+                tableHTML += `<th>${field.name} (${field.type})</th>`;
             });
 
-            // Add initial row
-            bulkData = [{}];
-            renderDataRows();
-            
-            modal.classList.add('active');
-        }
+            tableHTML += `<th style="width: 80px;">Actions</th></tr></thead><tbody>`;
 
-        function closeBulkExport() {
-            document.getElementById('bulk-modal').classList.remove('active');
+            // Add rows for data
+            bulkData.forEach((data, rowIndex) => {
+                tableHTML += `<tr>`;
+                tableHTML += `<td><strong>${rowIndex + 1}</strong></td>`;
+
+                templateFields.forEach(field => {
+                    if (field.type === 'text') {
+                        tableHTML += `
+                            <td>
+                                <input type="text" 
+                                       placeholder="Enter ${field.name}"
+                                       value="${data[field.name] || ''}"
+                                       onchange="bulkData[${rowIndex}]['${field.name}'] = this.value">
+                            </td>
+                        `;
+                    } else if (field.type === 'image') {
+                        const hasImage = data[field.name] ? '✓ Image' : 'Choose';
+                        tableHTML += `
+                            <td>
+                                <input type="file" 
+                                       id="bulk-img-${field.name}-${rowIndex}" 
+                                       accept="image/*"
+                                       onchange="handleBulkImage('${field.name}', ${rowIndex}, this)">
+                                <label for="bulk-img-${field.name}-${rowIndex}" 
+                                       style="cursor: pointer; color: #667eea; font-weight: 600;">
+                                    ${hasImage}
+                                </label>
+                            </td>
+                        `;
+                    }
+                });
+
+                tableHTML += `
+                    <td>
+                        <button onclick="removeDataRow(${rowIndex})" ${bulkData.length <= 1 ? 'disabled style="opacity: 0.3; cursor: not-allowed;"' : ''}>
+                            ✕
+                        </button>
+                    </td>
+                </tr>`;
+            });
+
+            tableHTML += `</tbody></table></div>`;
+
+            tableHTML += `
+                <div class="bulk-actions">
+                    <button class="btn btn-primary" onclick="addDataRow()">
+                        ➕ Add Row
+                    </button>
+                    <button class="btn btn-success" onclick="generateBulk()">
+                        🚀 Generate & Download All (${bulkData.length} poster${bulkData.length > 1 ? 's' : ''})
+                    </button>
+                </div>
+            </div>`;
+
+            bulkContent.innerHTML = tableHTML;
         }
 
         function addDataRow() {
             bulkData.push({});
-            renderDataRows();
+            renderBulkExportInterface();
         }
 
         function removeDataRow(index) {
+            if (bulkData.length <= 1) return;
             bulkData.splice(index, 1);
-            if (bulkData.length === 0) {
-                bulkData = [{}];
-            }
-            renderDataRows();
-        }
-
-        function renderDataRows() {
-            templateFields.forEach(field => {
-                const container = document.getElementById(`data-container-${field.name}`);
-                container.innerHTML = '';
-
-                bulkData.forEach((data, index) => {
-                    const row = document.createElement('div');
-                    row.className = 'data-row';
-                    
-                    if (field.type === 'text') {
-                        row.innerHTML = `
-                            <input type="text" 
-                                   placeholder="Value for row ${index + 1}" 
-                                   value="${data[field.name] || ''}"
-                                   onchange="bulkData[${index}]['${field.name}'] = this.value">
-                            ${bulkData.length > 1 ? `<button onclick="removeDataRow(${index})">✕</button>` : ''}
-                        `;
-                    } else if (field.type === 'image') {
-                        row.innerHTML = `
-                            <input type="file" 
-                                   id="bulk-img-${field.name}-${index}" 
-                                   accept="image/*"
-                                   onchange="handleBulkImage('${field.name}', ${index}, this)"
-                                   style="display: none;">
-                            <label for="bulk-img-${field.name}-${index}" 
-                                   style="flex: 1; padding: 8px; background: #f8f9fa; border: 1px dashed #ddd; border-radius: 6px; cursor: pointer; text-align: center;">
-                                ${data[field.name] ? '✓ Image selected' : '📤 Choose image'}
-                            </label>
-                            ${bulkData.length > 1 ? `<button onclick="removeDataRow(${index})">✕</button>` : ''}
-                        `;
-                    }
-                    
-                    container.appendChild(row);
-                });
-            });
+            renderBulkExportInterface();
         }
 
         function handleBulkImage(fieldName, index, input) {
@@ -760,7 +974,7 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 bulkData[index][fieldName] = e.target.result;
-                input.parentElement.querySelector('label').textContent = '✓ Image selected';
+                renderBulkExportInterface();
             };
             reader.readAsDataURL(file);
         }
@@ -770,6 +984,11 @@
             
             const zip = new JSZip();
             const promises = [];
+
+            const exportDimensions = backgroundImageDimensions || {
+                width: canvas.width,
+                height: canvas.height
+            };
 
             for (let i = 0; i < bulkData.length; i++) {
                 const data = bulkData[i];
@@ -811,7 +1030,8 @@
                     setTimeout(() => {
                         const dataURL = canvas.toDataURL({
                             format: 'png',
-                            quality: 1
+                            quality: 1,
+                            multiplier: exportDimensions.width / canvas.width
                         });
 
                         // Convert to blob
@@ -848,7 +1068,6 @@
             zip.generateAsync({type: 'blob'}).then(function(content) {
                 saveAs(content, 'posters_' + Date.now() + '.zip');
                 hideLoading();
-                closeBulkExport();
                 alert(`Successfully generated ${bulkData.length} posters!`);
             });
         }
@@ -876,8 +1095,21 @@
             }
         });
 
-        // Initialize on load
-        window.addEventListener('load', initCanvas);
+        // Handle logo errors - hide if not found
+        window.addEventListener('load', function() {
+            initCanvas();
+            
+            const logo1 = document.getElementById('logo1');
+            const logo2 = document.getElementById('logo2');
+            
+            logo1.onerror = function() {
+                this.classList.add('hidden');
+            };
+            
+            logo2.onerror = function() {
+                this.classList.add('hidden');
+            };
+        });
     </script>
 </body>
 </html>
