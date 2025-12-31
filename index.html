@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BatchPoster Pro - by Exera</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <!-- Background removal via remove.bg API -->
@@ -48,9 +49,19 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #073F55;
             min-height: 100vh;
             padding: 20px;
+            position: relative;
+        }
+
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 0;
         }
 
         .container {
@@ -60,10 +71,12 @@
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             overflow: hidden;
+            position: relative;
+            z-index: 1;
         }
 
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #073F55 0%, #07778F 100%);
             color: white;
             padding: 25px 30px;
             text-align: center;
@@ -119,13 +132,13 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #07778F 0%, #073F55 100%);
             color: white;
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 5px 15px rgba(7, 119, 143, 0.4);
         }
 
         .btn-secondary {
@@ -221,8 +234,8 @@
         }
 
         .file-label:hover {
-            border-color: #667eea;
-            background: #f0f2ff;
+            border-color: #07778F;
+            background: #e6f4f5;
         }
 
         #canvas-container {
@@ -278,11 +291,11 @@
             padding: 12px;
             border-radius: 8px;
             margin-bottom: 15px;
-            border-left: 4px solid #667eea;
+            border-left: 4px solid #07778F;
         }
 
         .template-item strong {
-            color: #667eea;
+            color: #07778F;
             display: block;
             margin-bottom: 5px;
         }
@@ -386,13 +399,13 @@
         }
 
         .tab:hover {
-            color: #667eea;
-            background: rgba(102, 126, 234, 0.05);
+            color: #07778F;
+            background: rgba(7, 119, 143, 0.05);
         }
 
         .tab.active {
-            color: #667eea;
-            border-bottom-color: #667eea;
+            color: #07778F;
+            border-bottom-color: #07778F;
             background: white;
         }
 
@@ -400,7 +413,7 @@
             position: absolute;
             top: 8px;
             right: 8px;
-            background: #667eea;
+            background: #07778F;
             color: white;
             font-size: 10px;
             padding: 2px 6px;
@@ -438,7 +451,7 @@
         }
 
         .bulk-data-table th {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #07778F 0%, #073F55 100%);
             color: white;
             padding: 12px;
             text-align: left;
@@ -527,15 +540,16 @@
     </style>
 </head>
 <body>
+    <div id="particles-js"></div>
     <div class="container">
         <div class="header">
-            <div style="display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 10px;">
-                <img src="logo1.svg" alt="Exera Logo 1" class="header-logo" id="logo1" style="height: 50px; object-fit: contain;">
-                <img src="logo2.svg" alt="Exera Logo 2" class="header-logo" id="logo2" style="height: 50px; object-fit: contain;">
+            <h1 style="margin-bottom: 5px;">BatchPoster Pro</h1>
+            <p style="font-size: 12px; opacity: 0.9; margin-bottom: 15px;">Design once, export hundreds with different data</p>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 30px; margin-top: 15px;">
+                <img src="logo1.webp" alt="Exera Logo" class="header-logo" id="logo1" style="height: 40px; object-fit: contain;">
+                <img src="logo2.webp" alt="Exera Logo" class="header-logo" id="logo2" style="height: 40px; object-fit: contain;">
             </div>
-            <h1>BatchPoster Pro</h1>
-            <p style="font-size: 12px; opacity: 0.8; margin-bottom: 5px;">Proudly by Exera</p>
-            <p>Design once, export hundreds with different data</p>
+            <p style="font-size: 11px; opacity: 0.8; margin-top: 10px;">Powered by Exera</p>
         </div>
 
         <div class="tabs">
@@ -617,15 +631,15 @@
                             <div id="api-key-section" style="display: none; margin-top: 10px;">
                                 <input type="text" id="removebg-api-key" placeholder="Enter your remove.bg API key (optional - will be saved)" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
                                 <p style="font-size: 11px; color: #856404; margin-top: 5px;">
-                                    Get free API key: <a href="https://www.remove.bg/users/sign_up" target="_blank" style="color: #667eea; font-weight: 600;">remove.bg/api</a> (50 free/month)
+                                    Get free API key: <a href="https://www.remove.bg/users/sign_up" target="_blank" style="color: #07778F; font-weight: 600;">remove.bg/api</a> (50 free/month)
                                 </p>
-                                <div id="api-credits" style="display: none; margin-top: 8px; padding: 6px; background: rgba(102, 126, 234, 0.1); border-radius: 4px; font-size: 11px; color: #667eea; font-weight: 600;">
+                                <div id="api-credits" style="display: none; margin-top: 8px; padding: 6px; background: rgba(7, 119, 143, 0.1); border-radius: 4px; font-size: 11px; color: #07778F; font-weight: 600;">
                                     💳 Credits remaining: <span id="credits-count">--</span>
                                 </div>
                             </div>
                         </div>
-                        <p style="font-size: 11px; color: #666; margin-top: 10px; padding: 8px; background: #f0f2ff; border-radius: 6px;">
-                            💡 <strong>Or use these tools first:</strong> <a href="https://www.remove.bg" target="_blank" style="color: #667eea;">remove.bg</a> | <a href="https://photoscissors.com" target="_blank" style="color: #667eea;">PhotoScissors</a> | <a href="https://www.slazzer.com" target="_blank" style="color: #667eea;">Slazzer</a>
+                        <p style="font-size: 11px; color: #666; margin-top: 10px; padding: 8px; background: #e6f4f5; border-radius: 6px;">
+                            💡 <strong>Or use these tools first:</strong> <a href="https://www.remove.bg" target="_blank" style="color: #07778F;">remove.bg</a> | <a href="https://photoscissors.com" target="_blank" style="color: #07778F;">PhotoScissors</a> | <a href="https://www.slazzer.com" target="_blank" style="color: #07778F;">Slazzer</a>
                         </p>
                     </div>
 
@@ -823,7 +837,7 @@
                     
                     // Add visual indicator
                     text.set({
-                        stroke: '#667eea',
+                        stroke: '#07778F',
                         strokeWidth: 2
                     });
 
@@ -913,7 +927,7 @@
                             
                             // Add visual indicator
                             img.set({
-                                stroke: '#667eea',
+                                stroke: '#07778F',
                                 strokeWidth: 3
                             });
 
@@ -1073,7 +1087,7 @@
                                        accept="image/*"
                                        onchange="handleBulkImage('${field.name}', ${rowIndex}, this)">
                                 <label for="bulk-img-${field.name}-${rowIndex}" 
-                                       style="cursor: pointer; color: #667eea; font-weight: 600;">
+                                       style="cursor: pointer; color: #07778F; font-weight: 600;">
                                     ${hasImage}
                                 </label>
                             </td>
@@ -1354,7 +1368,7 @@
             );
             
             // Draw selection rectangle
-            ctx.strokeStyle = '#667eea';
+            ctx.strokeStyle = '#07778F';
             ctx.lineWidth = 2;
             ctx.strokeRect(cropRect.x, cropRect.y, cropRect.width, cropRect.height);
         }
@@ -1396,7 +1410,7 @@
                 
                 if (cropImage.templateField) {
                     newImg.set({
-                        stroke: '#667eea',
+                        stroke: '#07778F',
                         strokeWidth: 3
                     });
                     
@@ -1448,6 +1462,95 @@
             logo2.onerror = function() {
                 this.classList.add('hidden');
             };
+
+            // Initialize particles.js with hexagons
+            particlesJS('particles-js', {
+                particles: {
+                    number: {
+                        value: 40,
+                        density: {
+                            enable: true,
+                            value_area: 800
+                        }
+                    },
+                    color: {
+                        value: '#07778F'
+                    },
+                    shape: {
+                        type: 'polygon',
+                        stroke: {
+                            width: 1,
+                            color: '#07778F'
+                        },
+                        polygon: {
+                            nb_sides: 6
+                        }
+                    },
+                    opacity: {
+                        value: 0.3,
+                        random: true,
+                        anim: {
+                            enable: true,
+                            speed: 0.5,
+                            opacity_min: 0.1,
+                            sync: false
+                        }
+                    },
+                    size: {
+                        value: 30,
+                        random: true,
+                        anim: {
+                            enable: true,
+                            speed: 2,
+                            size_min: 10,
+                            sync: false
+                        }
+                    },
+                    line_linked: {
+                        enable: true,
+                        distance: 150,
+                        color: '#07778F',
+                        opacity: 0.2,
+                        width: 1
+                    },
+                    move: {
+                        enable: true,
+                        speed: 1,
+                        direction: 'none',
+                        random: true,
+                        straight: false,
+                        out_mode: 'out',
+                        bounce: false,
+                        attract: {
+                            enable: false,
+                            rotateX: 600,
+                            rotateY: 1200
+                        }
+                    }
+                },
+                interactivity: {
+                    detect_on: 'canvas',
+                    events: {
+                        onhover: {
+                            enable: true,
+                            mode: 'grab'
+                        },
+                        onclick: {
+                            enable: false
+                        },
+                        resize: true
+                    },
+                    modes: {
+                        grab: {
+                            distance: 140,
+                            line_linked: {
+                                opacity: 0.5
+                            }
+                        }
+                    }
+                },
+                retina_detect: true
+            });
         });
     </script>
 </body>
