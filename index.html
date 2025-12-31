@@ -599,6 +599,34 @@
             text-decoration: underline;
         }
 
+        /* Style buttons for text formatting */
+        .style-btn {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+
+        .style-btn:hover {
+            border-color: #07778F;
+            background: #e6f4f5;
+            transform: scale(1.05);
+        }
+
+        .style-btn.active {
+            background: #07778F;
+            color: white;
+            border-color: #07778F;
+        }
+
         /* Template indicator badge */
         .template-badge {
             display: inline-flex;
@@ -825,6 +853,28 @@
             100% { transform: rotate(360deg); }
         }
 
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
         #loading-text {
             font-size: 16px;
             font-weight: 600;
@@ -965,6 +1015,35 @@
                         </div>
                     </div>
 
+                    <!-- Canvas Size Settings -->
+                    <div class="section">
+                        <div class="section-title">📐 Canvas Size</div>
+                        <div class="form-grid" style="margin-bottom: 12px;">
+                            <div class="form-group" style="margin: 0;">
+                                <label>Width (px)</label>
+                                <input type="number" id="canvas-width" value="800" min="100" max="5000" onchange="updateCanvasSize()">
+                            </div>
+                            <div class="form-group" style="margin: 0;">
+                                <label>Height (px)</label>
+                                <input type="number" id="canvas-height" value="600" min="100" max="5000" onchange="updateCanvasSize()">
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button class="btn btn-secondary" style="flex: 1; padding: 8px; font-size: 12px;" onclick="setCanvasPreset(1080, 1080)">
+                                Instagram<br><span style="font-size: 10px; opacity: 0.7;">1080×1080</span>
+                            </button>
+                            <button class="btn btn-secondary" style="flex: 1; padding: 8px; font-size: 12px;" onclick="setCanvasPreset(1080, 1920)">
+                                Story<br><span style="font-size: 10px; opacity: 0.7;">1080×1920</span>
+                            </button>
+                            <button class="btn btn-secondary" style="flex: 1; padding: 8px; font-size: 12px;" onclick="setCanvasPreset(1920, 1080)">
+                                YouTube<br><span style="font-size: 10px; opacity: 0.7;">1920×1080</span>
+                            </button>
+                        </div>
+                        <div class="info-box" style="margin-top: 10px; font-size: 11px;">
+                            💡 Uploading a background will automatically resize canvas to match
+                        </div>
+                    </div>
+
                     <!-- Text Properties (shown when text is selected) -->
                     <div class="section" id="text-properties" style="display: none;">
                         <div class="section-title">✏️ Text Properties</div>
@@ -978,18 +1057,108 @@
                                 <option value="Verdana">Verdana</option>
                                 <option value="Impact">Impact</option>
                                 <option value="Comic Sans MS">Comic Sans MS</option>
+                                <option value="Courier New">Courier New</option>
+                                <option value="Trebuchet MS">Trebuchet MS</option>
                             </select>
                         </div>
+                        
+                        <!-- Text Style Buttons -->
+                        <div class="form-group">
+                            <label>Text Style</label>
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                <button class="style-btn" id="bold-btn" onclick="toggleBold()" title="Bold">
+                                    <strong>B</strong>
+                                </button>
+                                <button class="style-btn" id="italic-btn" onclick="toggleItalic()" title="Italic">
+                                    <em>I</em>
+                                </button>
+                                <button class="style-btn" id="underline-btn" onclick="toggleUnderline()" title="Underline">
+                                    <u>U</u>
+                                </button>
+                                <button class="style-btn" id="linethrough-btn" onclick="toggleLinethrough()" title="Strikethrough">
+                                    <s>S</s>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Text Alignment -->
+                        <div class="form-group">
+                            <label>Text Align</label>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="style-btn" onclick="setTextAlign('left')" title="Align Left">
+                                    ≡
+                                </button>
+                                <button class="style-btn" onclick="setTextAlign('center')" title="Align Center">
+                                    ≣
+                                </button>
+                                <button class="style-btn" onclick="setTextAlign('right')" title="Align Right">
+                                    ≡
+                                </button>
+                            </div>
+                        </div>
+
                         <div class="form-grid">
                             <div class="form-group">
                                 <label>Font Size</label>
                                 <input type="number" id="text-size-edit" value="30" min="8" max="200" onchange="updateSelectedText()">
                             </div>
                             <div class="form-group">
-                                <label>Color</label>
-                                <input type="color" id="text-color-edit" value="#000000" onchange="updateSelectedText()">
+                                <label>Letter Spacing</label>
+                                <input type="number" id="text-spacing-edit" value="0" min="-50" max="500" step="10" onchange="updateSelectedText()">
                             </div>
                         </div>
+
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Text Color</label>
+                                <input type="color" id="text-color-edit" value="#000000" onchange="updateSelectedText()">
+                            </div>
+                            <div class="form-group">
+                                <label>Opacity</label>
+                                <input type="range" id="text-opacity-edit" value="100" min="0" max="100" onchange="updateSelectedText()" style="width: 100%; height: 40px;">
+                            </div>
+                        </div>
+
+                        <!-- Text Shadow -->
+                        <div class="form-group">
+                            <label style="display: flex; align-items: center; gap: 8px;">
+                                <input type="checkbox" id="text-shadow-toggle" onchange="toggleTextShadow()" style="width: 18px; height: 18px;">
+                                Add Text Shadow
+                            </label>
+                            <div id="shadow-controls" style="display: none; margin-top: 10px; padding: 12px; background: #f8f9fa; border-radius: 8px;">
+                                <div class="form-grid" style="gap: 8px;">
+                                    <div class="form-group" style="margin: 0;">
+                                        <label style="font-size: 11px;">Shadow Color</label>
+                                        <input type="color" id="shadow-color" value="#000000" onchange="updateTextShadow()">
+                                    </div>
+                                    <div class="form-group" style="margin: 0;">
+                                        <label style="font-size: 11px;">Blur</label>
+                                        <input type="number" id="shadow-blur" value="4" min="0" max="50" onchange="updateTextShadow()">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Text Outline -->
+                        <div class="form-group">
+                            <label style="display: flex; align-items: center; gap: 8px;">
+                                <input type="checkbox" id="text-stroke-toggle" onchange="toggleTextStroke()" style="width: 18px; height: 18px;">
+                                Add Text Outline
+                            </label>
+                            <div id="stroke-controls" style="display: none; margin-top: 10px; padding: 12px; background: #f8f9fa; border-radius: 8px;">
+                                <div class="form-grid" style="gap: 8px;">
+                                    <div class="form-group" style="margin: 0;">
+                                        <label style="font-size: 11px;">Outline Color</label>
+                                        <input type="color" id="stroke-color" value="#ffffff" onchange="updateTextStroke()">
+                                    </div>
+                                    <div class="form-group" style="margin: 0;">
+                                        <label style="font-size: 11px;">Width</label>
+                                        <input type="number" id="stroke-width" value="2" min="1" max="20" onchange="updateTextStroke()">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="btn-group">
                             <button class="btn btn-success" onclick="makeTemplateField()" title="Use this text with different content in bulk export">
                                 ✨ Make Template
@@ -1010,7 +1179,10 @@
                                 <div class="toggle-switch" id="bg-remove-toggle"></div>
                             </div>
                             <div class="toggle-content" id="bg-remove-content">
-                                <input type="text" id="removebg-api-key" placeholder="Enter your remove.bg API key" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 13px; margin-bottom: 8px;">
+                                <input type="text" id="removebg-api-key" placeholder="Enter your remove.bg API key" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 13px; margin-bottom: 10px;">
+                                <button class="btn btn-success" onclick="applyBackgroundRemoval()" style="margin-bottom: 10px;">
+                                    ✨ Apply Background Removal
+                                </button>
                                 <div class="info-box">
                                     <strong>Get your free API key:</strong>
                                     <a href="https://www.remove.bg/users/sign_up" target="_blank">remove.bg/api</a> (50 free/month)
@@ -1151,7 +1323,6 @@
         let templateFields = [];
         let bulkData = [{}];
         let backgroundImageDimensions = null;
-        let bgRemoveEnabled = false;
 
         // Initialize
         window.addEventListener('load', function() {
@@ -1230,6 +1401,49 @@
             document.getElementById('text-font-edit').value = textObj.fontFamily;
             document.getElementById('text-size-edit').value = textObj.fontSize;
             document.getElementById('text-color-edit').value = textObj.fill;
+            document.getElementById('text-spacing-edit').value = textObj.charSpacing || 0;
+            document.getElementById('text-opacity-edit').value = (textObj.opacity || 1) * 100;
+            
+            // Update style button states
+            updateStyleButtons(textObj);
+        }
+
+        function updateStyleButtons(textObj) {
+            // Bold
+            document.getElementById('bold-btn').classList.toggle('active', 
+                textObj.fontWeight === 'bold' || textObj.fontWeight === 700);
+            
+            // Italic
+            document.getElementById('italic-btn').classList.toggle('active', 
+                textObj.fontStyle === 'italic');
+            
+            // Underline
+            document.getElementById('underline-btn').classList.toggle('active', 
+                textObj.underline === true);
+            
+            // Linethrough
+            document.getElementById('linethrough-btn').classList.toggle('active', 
+                textObj.linethrough === true);
+            
+            // Shadow
+            const hasShadow = textObj.shadow && textObj.shadow !== null;
+            document.getElementById('text-shadow-toggle').checked = hasShadow;
+            document.getElementById('shadow-controls').style.display = hasShadow ? 'block' : 'none';
+            
+            // Stroke
+            const hasStroke = textObj.stroke && textObj.stroke !== null && !textObj.templateField;
+            document.getElementById('text-stroke-toggle').checked = hasStroke;
+            document.getElementById('stroke-controls').style.display = hasStroke ? 'block' : 'none';
+            
+            if (hasShadow && textObj.shadow) {
+                document.getElementById('shadow-color').value = textObj.shadow.color || '#000000';
+                document.getElementById('shadow-blur').value = textObj.shadow.blur || 4;
+            }
+            
+            if (hasStroke && !textObj.templateField) {
+                document.getElementById('stroke-color').value = textObj.stroke || '#ffffff';
+                document.getElementById('stroke-width').value = textObj.strokeWidth || 2;
+            }
         }
 
         function hideTextProperties() {
@@ -1251,9 +1465,127 @@
             selected.set({
                 fontFamily: document.getElementById('text-font-edit').value,
                 fontSize: parseInt(document.getElementById('text-size-edit').value),
-                fill: document.getElementById('text-color-edit').value
+                fill: document.getElementById('text-color-edit').value,
+                charSpacing: parseInt(document.getElementById('text-spacing-edit').value),
+                opacity: parseInt(document.getElementById('text-opacity-edit').value) / 100
             });
 
+            canvas.renderAll();
+        }
+
+        // Text style toggle functions
+        function toggleBold() {
+            const selected = canvas.getActiveObject();
+            if (!selected || (selected.type !== 'i-text' && selected.type !== 'text')) return;
+            
+            const isBold = selected.fontWeight === 'bold' || selected.fontWeight === 700;
+            selected.set('fontWeight', isBold ? 'normal' : 'bold');
+            canvas.renderAll();
+            updateStyleButtons(selected);
+        }
+
+        function toggleItalic() {
+            const selected = canvas.getActiveObject();
+            if (!selected || (selected.type !== 'i-text' && selected.type !== 'text')) return;
+            
+            const isItalic = selected.fontStyle === 'italic';
+            selected.set('fontStyle', isItalic ? 'normal' : 'italic');
+            canvas.renderAll();
+            updateStyleButtons(selected);
+        }
+
+        function toggleUnderline() {
+            const selected = canvas.getActiveObject();
+            if (!selected || (selected.type !== 'i-text' && selected.type !== 'text')) return;
+            
+            selected.set('underline', !selected.underline);
+            canvas.renderAll();
+            updateStyleButtons(selected);
+        }
+
+        function toggleLinethrough() {
+            const selected = canvas.getActiveObject();
+            if (!selected || (selected.type !== 'i-text' && selected.type !== 'text')) return;
+            
+            selected.set('linethrough', !selected.linethrough);
+            canvas.renderAll();
+            updateStyleButtons(selected);
+        }
+
+        function setTextAlign(alignment) {
+            const selected = canvas.getActiveObject();
+            if (!selected || (selected.type !== 'i-text' && selected.type !== 'text')) return;
+            
+            selected.set('textAlign', alignment);
+            canvas.renderAll();
+        }
+
+        // Text shadow functions
+        function toggleTextShadow() {
+            const checkbox = document.getElementById('text-shadow-toggle');
+            const controls = document.getElementById('shadow-controls');
+            controls.style.display = checkbox.checked ? 'block' : 'none';
+            
+            if (checkbox.checked) {
+                updateTextShadow();
+            } else {
+                const selected = canvas.getActiveObject();
+                if (selected && (selected.type === 'i-text' || selected.type === 'text')) {
+                    selected.set('shadow', null);
+                    canvas.renderAll();
+                }
+            }
+        }
+
+        function updateTextShadow() {
+            const selected = canvas.getActiveObject();
+            if (!selected || (selected.type !== 'i-text' && selected.type !== 'text')) return;
+            
+            const color = document.getElementById('shadow-color').value;
+            const blur = parseInt(document.getElementById('shadow-blur').value);
+            
+            selected.set('shadow', {
+                color: color,
+                blur: blur,
+                offsetX: 2,
+                offsetY: 2
+            });
+            canvas.renderAll();
+        }
+
+        // Text stroke/outline functions
+        function toggleTextStroke() {
+            const checkbox = document.getElementById('text-stroke-toggle');
+            const controls = document.getElementById('stroke-controls');
+            controls.style.display = checkbox.checked ? 'block' : 'none';
+            
+            if (checkbox.checked) {
+                updateTextStroke();
+            } else {
+                const selected = canvas.getActiveObject();
+                if (selected && (selected.type === 'i-text' || selected.type === 'text') && !selected.templateField) {
+                    selected.set({
+                        stroke: null,
+                        strokeWidth: 0
+                    });
+                    canvas.renderAll();
+                }
+            }
+        }
+
+        function updateTextStroke() {
+            const selected = canvas.getActiveObject();
+            if (!selected || (selected.type !== 'i-text' && selected.type !== 'text')) return;
+            if (selected.templateField) return; // Don't override template stroke
+            
+            const color = document.getElementById('stroke-color').value;
+            const width = parseInt(document.getElementById('stroke-width').value);
+            
+            selected.set({
+                stroke: color,
+                strokeWidth: width,
+                paintFirst: 'stroke'
+            });
             canvas.renderAll();
         }
 
@@ -1309,51 +1641,91 @@
                         height: img.height
                     };
 
+                    // Auto-resize canvas to match background image
+                    canvas.setDimensions({
+                        width: img.width,
+                        height: img.height
+                    });
+                    
+                    // Update size inputs
+                    document.getElementById('canvas-width').value = img.width;
+                    document.getElementById('canvas-height').value = img.height;
+
+                    // Scale image to fit canvas exactly
                     img.scaleToWidth(canvas.width);
                     img.scaleToHeight(canvas.height);
                     img.selectable = false;
                     canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas));
                     
                     hideLoading();
+                    
+                    // Show notification
+                    showNotification(`Canvas resized to ${img.width}×${img.height}px to match background`);
                 });
             };
             reader.readAsDataURL(file);
+        }
+
+        function updateCanvasSize() {
+            const width = parseInt(document.getElementById('canvas-width').value);
+            const height = parseInt(document.getElementById('canvas-height').value);
+            
+            if (width < 100 || height < 100 || width > 5000 || height > 5000) {
+                alert('Canvas dimensions must be between 100 and 5000 pixels');
+                return;
+            }
+            
+            canvas.setDimensions({
+                width: width,
+                height: height
+            });
+            
+            // Resize background if exists
+            const bgImage = canvas.backgroundImage;
+            if (bgImage) {
+                bgImage.scaleToWidth(width);
+                bgImage.scaleToHeight(height);
+            }
+            
+            canvas.renderAll();
+            backgroundImageDimensions = { width, height };
+        }
+
+        function setCanvasPreset(width, height) {
+            document.getElementById('canvas-width').value = width;
+            document.getElementById('canvas-height').value = height;
+            updateCanvasSize();
+        }
+
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #28a745;
+                color: white;
+                padding: 15px 25px;
+                border-radius: 10px;
+                box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+                z-index: 10000;
+                font-weight: 600;
+                animation: slideIn 0.3s ease;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
         }
 
         async function handleImageUpload(file) {
             showLoading('Loading image...');
 
             try {
-                let imageUrl;
-                let shouldCrop = false;
-
-                if (bgRemoveEnabled) {
-                    const apiKey = document.getElementById('removebg-api-key').value.trim();
-                    
-                    if (!apiKey) {
-                        alert('Please enter your remove.bg API key first.\n\nGet one free at: https://www.remove.bg/users/sign_up (50 free/month)');
-                        hideLoading();
-                        return;
-                    }
-
-                    updateLoadingText('Removing background...');
-                    
-                    try {
-                        localStorage.setItem('removebg_api_key', apiKey);
-                        const result = await removeBackgroundWithAPI(file, apiKey);
-                        imageUrl = URL.createObjectURL(result.blob);
-                        shouldCrop = true;
-                        
-                        document.getElementById('api-credits').style.display = 'block';
-                        document.getElementById('credits-count').textContent = result.credits;
-                    } catch (bgError) {
-                        console.error('Background removal failed:', bgError);
-                        alert('Background removal failed. Please check your API key or try again.');
-                        imageUrl = URL.createObjectURL(file);
-                    }
-                } else {
-                    imageUrl = URL.createObjectURL(file);
-                }
+                const imageUrl = URL.createObjectURL(file);
 
                 fabric.Image.fromURL(imageUrl, function(img) {
                     img.scaleToWidth(200);
@@ -1366,24 +1738,12 @@
                     canvas.setActiveObject(img);
                     canvas.renderAll();
                     hideLoading();
-                    
-                    if (shouldCrop) {
-                        setTimeout(() => {
-                            if (confirm('Background removed! Would you like to crop the image?')) {
-                                cropSelectedImage();
-                            }
-                        }, 300);
-                    }
                 });
             } catch (error) {
                 console.error('Error processing image:', error);
                 alert('Error processing image: ' + error.message);
                 hideLoading();
             }
-
-            bgRemoveEnabled = false;
-            document.getElementById('bg-remove-toggle').classList.remove('active');
-            document.getElementById('bg-remove-content').classList.remove('visible');
         }
 
         // Quick add text
@@ -1526,16 +1886,100 @@
 
         // Background removal toggle
         function toggleBackgroundRemoval() {
-            bgRemoveEnabled = !bgRemoveEnabled;
             const toggle = document.getElementById('bg-remove-toggle');
             const content = document.getElementById('bg-remove-content');
+            const isActive = toggle.classList.contains('active');
             
-            if (bgRemoveEnabled) {
-                toggle.classList.add('active');
-                content.classList.add('visible');
-            } else {
+            if (isActive) {
                 toggle.classList.remove('active');
                 content.classList.remove('visible');
+            } else {
+                toggle.classList.add('active');
+                content.classList.add('visible');
+            }
+        }
+
+        async function applyBackgroundRemoval() {
+            const selected = canvas.getActiveObject();
+            if (!selected || selected.type !== 'image') {
+                alert('Please select an image first');
+                return;
+            }
+
+            const apiKey = document.getElementById('removebg-api-key').value.trim();
+            
+            if (!apiKey) {
+                alert('Please enter your remove.bg API key.\n\nGet one free at: https://www.remove.bg/users/sign_up\n(50 free removals/month)');
+                return;
+            }
+
+            showLoading('Removing background...');
+
+            try {
+                // Convert fabric image to blob
+                const imgElement = selected.getElement();
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = imgElement.width;
+                tempCanvas.height = imgElement.height;
+                const ctx = tempCanvas.getContext('2d');
+                ctx.drawImage(imgElement, 0, 0);
+                
+                const blob = await new Promise(resolve => tempCanvas.toBlob(resolve, 'image/png'));
+                
+                // Save API key
+                localStorage.setItem('removebg_api_key', apiKey);
+                
+                // Remove background
+                const result = await removeBackgroundWithAPI(blob, apiKey);
+                const imageUrl = URL.createObjectURL(result.blob);
+                
+                // Display credits
+                document.getElementById('api-credits').style.display = 'block';
+                document.getElementById('credits-count').textContent = result.credits;
+                
+                // Replace image
+                fabric.Image.fromURL(imageUrl, function(newImg) {
+                    newImg.set({
+                        left: selected.left,
+                        top: selected.top,
+                        scaleX: selected.scaleX,
+                        scaleY: selected.scaleY,
+                        angle: selected.angle,
+                        templateField: selected.templateField,
+                        templateType: selected.templateType
+                    });
+                    
+                    if (selected.templateField) {
+                        newImg.set({
+                            stroke: '#07778F',
+                            strokeWidth: 3
+                        });
+                        
+                        const field = templateFields.find(f => f.object === selected);
+                        if (field) {
+                            field.object = newImg;
+                        }
+                    }
+                    
+                    canvas.remove(selected);
+                    canvas.add(newImg);
+                    canvas.setActiveObject(newImg);
+                    canvas.renderAll();
+                    
+                    hideLoading();
+                    
+                    // Ask if user wants to crop
+                    setTimeout(() => {
+                        if (confirm('Background removed successfully! Would you like to crop the image to remove excess transparent areas?')) {
+                            cropSelectedImage();
+                        }
+                    }, 300);
+                });
+                
+            } catch (error) {
+                console.error('Background removal failed:', error);
+                alert('Background removal failed. Please check:\n\n1. Your API key is correct\n2. Image size is under 12MB\n3. You have credits remaining\n\nTry external tools if issues persist.');
+                hideLoading();
             }
         }
 
