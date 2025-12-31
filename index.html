@@ -1039,8 +1039,28 @@
                                 YouTube<br><span style="font-size: 10px; opacity: 0.7;">1920×1080</span>
                             </button>
                         </div>
+                        
+                        <!-- Zoom Controls -->
+                        <div class="form-group" style="margin-top: 15px;">
+                            <label>Zoom View</label>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <button class="btn btn-secondary" onclick="zoomOut()" style="padding: 10px; flex: 0 0 auto;">
+                                    🔍−
+                                </button>
+                                <button class="btn btn-secondary" onclick="resetZoom()" style="padding: 10px; flex: 1; font-size: 12px;">
+                                    Fit to View
+                                </button>
+                                <button class="btn btn-secondary" onclick="zoomIn()" style="padding: 10px; flex: 0 0 auto;">
+                                    🔍+
+                                </button>
+                            </div>
+                            <div style="margin-top: 8px; text-align: center; font-size: 12px; color: #666;" id="zoom-level">
+                                Zoom: 100%
+                            </div>
+                        </div>
+                        
                         <div class="info-box" style="margin-top: 10px; font-size: 11px;">
-                            💡 Uploading a background will automatically resize canvas to match
+                            💡 Uploading a background automatically resizes canvas and fits to view
                         </div>
                     </div>
 
@@ -1355,14 +1375,20 @@
         function resizeCanvas() {
             const container = document.getElementById('canvas-container');
             const containerWidth = container.clientWidth - 4;
-            const scale = containerWidth / 800;
             
+            // Only apply mobile scaling on actual mobile devices
             if (window.innerWidth <= 768) {
+                const scale = containerWidth / 800;
                 canvas.setDimensions({
                     width: containerWidth,
                     height: containerWidth * 0.75
                 });
                 canvas.setZoom(scale);
+            } else {
+                // On desktop, fit large canvases to view
+                if (canvas.width > 800 || canvas.height > 600) {
+                    fitCanvasToView();
+                }
             }
         }
 
@@ -1641,7 +1667,7 @@
                         height: img.height
                     };
 
-                    // Auto-resize canvas to match background image
+                    // Set actual canvas dimensions to match image
                     canvas.setDimensions({
                         width: img.width,
                         height: img.height
@@ -1657,6 +1683,9 @@
                     img.selectable = false;
                     canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas));
                     
+                    // Now scale the viewport to fit the container (like Canva)
+                    fitCanvasToView();
+                    
                     hideLoading();
                     
                     // Show notification
@@ -1664,6 +1693,77 @@
                 });
             };
             reader.readAsDataURL(file);
+        }
+
+        function fitCanvasToView() {
+            const container = document.getElementById('canvas-container');
+            const canvasArea = document.querySelector('.canvas-area');
+            
+            // Get available space (with some padding)
+            const maxWidth = canvasArea.clientWidth - 50;
+            const maxHeight = window.innerHeight - 300; // Account for header and controls
+            
+            // Calculate scale to fit
+            const scaleX = maxWidth / canvas.width;
+            const scaleY = maxHeight / canvas.height;
+            const scale = Math.min(scaleX, scaleY, 1); // Never scale up, only down
+            
+            if (scale < 1) {
+                // Apply zoom to fit
+                canvas.setZoom(scale);
+                
+                // Update container size to match scaled canvas
+                container.style.width = (canvas.width * scale) + 'px';
+                container.style.height = (canvas.height * scale) + 'px';
+                
+                canvas.renderAll();
+            } else {
+                // Canvas fits naturally
+                canvas.setZoom(1);
+                container.style.width = canvas.width + 'px';
+                container.style.height = canvas.height + 'px';
+            }
+            
+            updateZoomDisplay();
+        }
+
+        function zoomIn() {
+            let currentZoom = canvas.getZoom();
+            currentZoom = currentZoom * 1.2;
+            if (currentZoom > 5) currentZoom = 5; // Max 500%
+            
+            canvas.setZoom(currentZoom);
+            
+            const container = document.getElementById('canvas-container');
+            container.style.width = (canvas.width * currentZoom) + 'px';
+            container.style.height = (canvas.height * currentZoom) + 'px';
+            
+            canvas.renderAll();
+            updateZoomDisplay();
+        }
+
+        function zoomOut() {
+            let currentZoom = canvas.getZoom();
+            currentZoom = currentZoom / 1.2;
+            if (currentZoom < 0.1) currentZoom = 0.1; // Min 10%
+            
+            canvas.setZoom(currentZoom);
+            
+            const container = document.getElementById('canvas-container');
+            container.style.width = (canvas.width * currentZoom) + 'px';
+            container.style.height = (canvas.height * currentZoom) + 'px';
+            
+            canvas.renderAll();
+            updateZoomDisplay();
+        }
+
+        function resetZoom() {
+            fitCanvasToView();
+        }
+
+        function updateZoomDisplay() {
+            const zoom = Math.round(canvas.getZoom() * 100);
+            document.getElementById('zoom-level').textContent = `Zoom: ${zoom}%`;
         }
 
         function updateCanvasSize() {
@@ -1689,6 +1789,9 @@
             
             canvas.renderAll();
             backgroundImageDimensions = { width, height };
+            
+            // Fit to view
+            fitCanvasToView();
         }
 
         function setCanvasPreset(width, height) {
