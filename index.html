@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poster Template Creator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/dist/index.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .main-content {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .sidebar {
+            flex: 0 0 320px;
+            background: #f8f9fa;
+            padding: 25px;
+            border-right: 1px solid #e0e0e0;
+            max-height: calc(100vh - 150px);
+            overflow-y: auto;
+        }
+
+        .canvas-area {
+            flex: 1;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 300px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .section {
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #555;
+            margin-bottom: 6px;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .form-group input[type="color"] {
+            width: 100%;
+            height: 40px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-label {
+            display: block;
+            padding: 12px;
+            background: #f8f9fa;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-label:hover {
+            border-color: #667eea;
+            background: #f0f2ff;
+        }
+
+        #canvas-container {
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            background: white;
+            margin-bottom: 20px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .template-item {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .template-item strong {
+            color: #667eea;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .data-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .data-row input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+
+        .data-row button {
+            padding: 8px 15px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: white;
+        }
+
+        .loading.active {
+            display: flex;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                flex: 0 0 100%;
+                max-height: none;
+                border-right: none;
+                border-bottom: 1px solid #e0e0e0;
+            }
+
+            .canvas-area {
+                padding: 15px;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+
+        .icon {
+            width: 20px;
+            height: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 Poster Template Creator</h1>
+            <p>Design once, export multiple variations with different data</p>
+        </div>
+
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="section">
+                    <div class="section-title">📁 Background</div>
+                    <label for="bg-upload" class="file-label">
+                        📤 Upload Background Image
+                    </label>
+                    <input type="file" id="bg-upload" accept="image/*">
+                </div>
+
+                <div class="section">
+                    <div class="section-title">📝 Add Text</div>
+                    <div class="form-group">
+                        <label>Text Content</label>
+                        <input type="text" id="text-content" placeholder="Enter text">
+                    </div>
+                    <div class="form-group">
+                        <label>Font Family</label>
+                        <select id="text-font">
+                            <option value="Arial">Arial</option>
+                            <option value="Helvetica">Helvetica</option>
+                            <option value="Times New Roman">Times New Roman</option>
+                            <option value="Courier New">Courier New</option>
+                            <option value="Georgia">Georgia</option>
+                            <option value="Verdana">Verdana</option>
+                            <option value="Impact">Impact</option>
+                            <option value="Comic Sans MS">Comic Sans MS</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Font Size</label>
+                        <input type="number" id="text-size" value="30" min="8" max="200">
+                    </div>
+                    <div class="form-group">
+                        <label>Color</label>
+                        <input type="color" id="text-color" value="#000000">
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="text-template">
+                        <label for="text-template">Make this a template field</label>
+                    </div>
+                    <button class="btn btn-primary" onclick="addText()">
+                        ➕ Add Text
+                    </button>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">🖼️ Add Image</div>
+                    <label for="img-upload" class="file-label">
+                        📤 Upload Image
+                    </label>
+                    <input type="file" id="img-upload" accept="image/*">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="img-remove-bg">
+                        <label for="img-remove-bg">Remove background (AI)</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="img-template">
+                        <label for="img-template">Make this a template field</label>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">🎯 Actions</div>
+                    <button class="btn btn-secondary" onclick="deleteSelected()">
+                        🗑️ Delete Selected
+                    </button>
+                    <button class="btn btn-success" onclick="openBulkExport()">
+                        📦 Bulk Export Templates
+                    </button>
+                    <button class="btn btn-danger" onclick="clearCanvas()">
+                        🔄 Clear All
+                    </button>
+                </div>
+            </div>
+
+            <div class="canvas-area">
+                <div id="canvas-container">
+                    <canvas id="canvas"></canvas>
+                </div>
+                <div class="controls">
+                    <button class="btn btn-primary" onclick="downloadSingle()">
+                        💾 Download Current
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Export Modal -->
+    <div id="bulk-modal" class="modal">
+        <div class="modal-content">
+            <h2>📦 Bulk Export Templates</h2>
+            <p style="margin-bottom: 20px; color: #666;">Fill in data for each template field. Each row creates a new poster.</p>
+            
+            <div id="template-fields"></div>
+            
+            <button class="btn btn-primary" onclick="addDataRow()" style="margin-top: 15px;">
+                ➕ Add Row
+            </button>
+            
+            <div style="display: flex; gap: 10px; margin-top: 25px;">
+                <button class="btn btn-success" onclick="generateBulk()">
+                    🚀 Generate & Download All
+                </button>
+                <button class="btn btn-secondary" onclick="closeBulkExport()">
+                    ❌ Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Screen -->
+    <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p id="loading-text">Processing...</p>
+    </div>
+
+    <script>
+        let canvas;
+        let templateFields = [];
+        let bulkData = [{}];
+
+        // Initialize canvas
+        function initCanvas() {
+            canvas = new fabric.Canvas('canvas', {
+                width: 800,
+                height: 600,
+                backgroundColor: '#ffffff'
+            });
+
+            // Make canvas responsive
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+        }
+
+        function resizeCanvas() {
+            const container = document.getElementById('canvas-container');
+            const containerWidth = container.clientWidth - 4; // Account for border
+            const scale = containerWidth / 800;
+            
+            if (window.innerWidth <= 768) {
+                canvas.setDimensions({
+                    width: containerWidth,
+                    height: containerWidth * 0.75
+                });
+                canvas.setZoom(scale);
+            }
+        }
+
+        // Upload background
+        document.getElementById('bg-upload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                fabric.Image.fromURL(event.target.result, function(img) {
+                    img.scaleToWidth(canvas.width);
+                    img.scaleToHeight(canvas.height);
+                    img.selectable = false;
+                    canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas));
+                });
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Add text
+        function addText() {
+            const content = document.getElementById('text-content').value || 'Sample Text';
+            const font = document.getElementById('text-font').value;
+            const size = parseInt(document.getElementById('text-size').value);
+            const color = document.getElementById('text-color').value;
+            const isTemplate = document.getElementById('text-template').checked;
+
+            const text = new fabric.IText(content, {
+                left: 100,
+                top: 100,
+                fontFamily: font,
+                fontSize: size,
+                fill: color,
+                editable: true
+            });
+
+            if (isTemplate) {
+                const fieldName = prompt('Enter a name for this template field:', 'text_' + (templateFields.length + 1));
+                if (fieldName) {
+                    text.templateField = fieldName;
+                    text.templateType = 'text';
+                    templateFields.push({
+                        name: fieldName,
+                        type: 'text',
+                        object: text
+                    });
+                    
+                    // Add visual indicator
+                    text.set({
+                        stroke: '#667eea',
+                        strokeWidth: 2
+                    });
+                }
+            }
+
+            canvas.add(text);
+            canvas.setActiveObject(text);
+            canvas.renderAll();
+
+            document.getElementById('text-content').value = '';
+            document.getElementById('text-template').checked = false;
+        }
+
+        // Upload and add image
+        document.getElementById('img-upload').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const removeBg = document.getElementById('img-remove-bg').checked;
+            const isTemplate = document.getElementById('img-template').checked;
+
+            showLoading('Loading image...');
+
+            try {
+                let imageUrl;
+
+                if (removeBg) {
+                    updateLoadingText('Removing background with AI...');
+                    const blob = await window.removeBackground(file);
+                    imageUrl = URL.createObjectURL(blob);
+                } else {
+                    imageUrl = URL.createObjectURL(file);
+                }
+
+                fabric.Image.fromURL(imageUrl, function(img) {
+                    img.scaleToWidth(200);
+                    img.set({
+                        left: 100,
+                        top: 100
+                    });
+
+                    if (isTemplate) {
+                        const fieldName = prompt('Enter a name for this template field:', 'image_' + (templateFields.length + 1));
+                        if (fieldName) {
+                            img.templateField = fieldName;
+                            img.templateType = 'image';
+                            templateFields.push({
+                                name: fieldName,
+                                type: 'image',
+                                object: img
+                            });
+                            
+                            // Add visual indicator
+                            img.set({
+                                stroke: '#667eea',
+                                strokeWidth: 3
+                            });
+                        }
+                    }
+
+                    canvas.add(img);
+                    canvas.setActiveObject(img);
+                    canvas.renderAll();
+                    hideLoading();
+                });
+            } catch (error) {
+                console.error('Error processing image:', error);
+                alert('Error processing image. Please try again.');
+                hideLoading();
+            }
+
+            document.getElementById('img-remove-bg').checked = false;
+            document.getElementById('img-template').checked = false;
+            e.target.value = '';
+        });
+
+        // Delete selected object
+        function deleteSelected() {
+            const activeObject = canvas.getActiveObject();
+            if (activeObject) {
+                // Remove from template fields if it's a template
+                if (activeObject.templateField) {
+                    templateFields = templateFields.filter(f => f.object !== activeObject);
+                }
+                canvas.remove(activeObject);
+                canvas.renderAll();
+            }
+        }
+
+        // Clear canvas
+        function clearCanvas() {
+            if (confirm('Are you sure you want to clear everything?')) {
+                canvas.clear();
+                canvas.backgroundColor = '#ffffff';
+                templateFields = [];
+                bulkData = [{}];
+            }
+        }
+
+        // Download single poster
+        function downloadSingle() {
+            const dataURL = canvas.toDataURL({
+                format: 'png',
+                quality: 1
+            });
+            
+            const link = document.createElement('a');
+            link.download = 'poster_' + Date.now() + '.png';
+            link.href = dataURL;
+            link.click();
+        }
+
+        // Open bulk export modal
+        function openBulkExport() {
+            if (templateFields.length === 0) {
+                alert('No template fields found! Add text or images and check "Make this a template field" to create templates.');
+                return;
+            }
+
+            const modal = document.getElementById('bulk-modal');
+            const fieldsContainer = document.getElementById('template-fields');
+            
+            fieldsContainer.innerHTML = '';
+            
+            templateFields.forEach(field => {
+                const item = document.createElement('div');
+                item.className = 'template-item';
+                item.innerHTML = `
+                    <strong>${field.name}</strong>
+                    <div id="data-container-${field.name}"></div>
+                `;
+                fieldsContainer.appendChild(item);
+            });
+
+            // Add initial row
+            bulkData = [{}];
+            renderDataRows();
+            
+            modal.classList.add('active');
+        }
+
+        function closeBulkExport() {
+            document.getElementById('bulk-modal').classList.remove('active');
+        }
+
+        function addDataRow() {
+            bulkData.push({});
+            renderDataRows();
+        }
+
+        function removeDataRow(index) {
+            bulkData.splice(index, 1);
+            if (bulkData.length === 0) {
+                bulkData = [{}];
+            }
+            renderDataRows();
+        }
+
+        function renderDataRows() {
+            templateFields.forEach(field => {
+                const container = document.getElementById(`data-container-${field.name}`);
+                container.innerHTML = '';
+
+                bulkData.forEach((data, index) => {
+                    const row = document.createElement('div');
+                    row.className = 'data-row';
+                    
+                    if (field.type === 'text') {
+                        row.innerHTML = `
+                            <input type="text" 
+                                   placeholder="Value for row ${index + 1}" 
+                                   value="${data[field.name] || ''}"
+                                   onchange="bulkData[${index}]['${field.name}'] = this.value">
+                            ${bulkData.length > 1 ? `<button onclick="removeDataRow(${index})">✕</button>` : ''}
+                        `;
+                    } else if (field.type === 'image') {
+                        row.innerHTML = `
+                            <input type="file" 
+                                   id="bulk-img-${field.name}-${index}" 
+                                   accept="image/*"
+                                   onchange="handleBulkImage('${field.name}', ${index}, this)"
+                                   style="display: none;">
+                            <label for="bulk-img-${field.name}-${index}" 
+                                   style="flex: 1; padding: 8px; background: #f8f9fa; border: 1px dashed #ddd; border-radius: 6px; cursor: pointer; text-align: center;">
+                                ${data[field.name] ? '✓ Image selected' : '📤 Choose image'}
+                            </label>
+                            ${bulkData.length > 1 ? `<button onclick="removeDataRow(${index})">✕</button>` : ''}
+                        `;
+                    }
+                    
+                    container.appendChild(row);
+                });
+            });
+        }
+
+        function handleBulkImage(fieldName, index, input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                bulkData[index][fieldName] = e.target.result;
+                input.parentElement.querySelector('label').textContent = '✓ Image selected';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function generateBulk() {
+            showLoading('Generating posters...');
+            
+            const zip = new JSZip();
+            const promises = [];
+
+            for (let i = 0; i < bulkData.length; i++) {
+                const data = bulkData[i];
+                updateLoadingText(`Generating poster ${i + 1} of ${bulkData.length}...`);
+
+                const promise = new Promise(async (resolve) => {
+                    // Save current state
+                    const originalState = canvas.toJSON(['templateField', 'templateType']);
+
+                    // Update template fields with data
+                    for (const field of templateFields) {
+                        if (field.type === 'text' && data[field.name]) {
+                            field.object.set('text', data[field.name]);
+                        } else if (field.type === 'image' && data[field.name]) {
+                            await new Promise((imgResolve) => {
+                                fabric.Image.fromURL(data[field.name], function(img) {
+                                    const originalObj = field.object;
+                                    img.set({
+                                        left: originalObj.left,
+                                        top: originalObj.top,
+                                        scaleX: originalObj.scaleX,
+                                        scaleY: originalObj.scaleY,
+                                        angle: originalObj.angle
+                                    });
+                                    
+                                    canvas.remove(originalObj);
+                                    canvas.add(img);
+                                    field.object = img;
+                                    canvas.renderAll();
+                                    imgResolve();
+                                });
+                            });
+                        }
+                    }
+
+                    canvas.renderAll();
+
+                    // Wait a bit for rendering
+                    setTimeout(() => {
+                        const dataURL = canvas.toDataURL({
+                            format: 'png',
+                            quality: 1
+                        });
+
+                        // Convert to blob
+                        fetch(dataURL)
+                            .then(res => res.blob())
+                            .then(blob => {
+                                zip.file(`poster_${i + 1}.png`, blob);
+                                
+                                // Restore original state
+                                canvas.loadFromJSON(originalState, () => {
+                                    canvas.renderAll();
+                                    // Restore template field references
+                                    canvas.getObjects().forEach(obj => {
+                                        if (obj.templateField) {
+                                            const field = templateFields.find(f => f.name === obj.templateField);
+                                            if (field) {
+                                                field.object = obj;
+                                            }
+                                        }
+                                    });
+                                    resolve();
+                                });
+                            });
+                    }, 100);
+                });
+
+                promises.push(promise);
+            }
+
+            await Promise.all(promises);
+
+            updateLoadingText('Creating ZIP file...');
+            
+            zip.generateAsync({type: 'blob'}).then(function(content) {
+                saveAs(content, 'posters_' + Date.now() + '.zip');
+                hideLoading();
+                closeBulkExport();
+                alert(`Successfully generated ${bulkData.length} posters!`);
+            });
+        }
+
+        function showLoading(text) {
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('loading-text').textContent = text;
+        }
+
+        function updateLoadingText(text) {
+            document.getElementById('loading-text').textContent = text;
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('active');
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Delete' || e.key === 'Backspace') {
+                const activeObject = canvas.getActiveObject();
+                if (activeObject && !activeObject.isEditing) {
+                    deleteSelected();
+                }
+            }
+        });
+
+        // Initialize on load
+        window.addEventListener('load', initCanvas);
+    </script>
+</body>
+</html>
