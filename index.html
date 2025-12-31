@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BatchPoster Pro - by Exera</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/dist/index.umd.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
@@ -572,13 +571,12 @@
                         </label>
                         <input type="file" id="img-upload" accept="image/*">
                         <div class="checkbox-group">
-                            <input type="checkbox" id="img-remove-bg">
-                            <label for="img-remove-bg">Remove background (AI)</label>
-                        </div>
-                        <div class="checkbox-group">
                             <input type="checkbox" id="img-template">
                             <label for="img-template">Make this a template field</label>
                         </div>
+                        <p style="font-size: 11px; color: #666; margin-top: 10px; padding: 8px; background: #f0f2ff; border-radius: 6px;">
+                            💡 <strong>Tip:</strong> Use <a href="https://www.remove.bg" target="_blank" style="color: #667eea;">remove.bg</a> or <a href="https://photoscissors.com" target="_blank" style="color: #667eea;">PhotoScissors</a> to remove backgrounds before uploading!
+                        </p>
                     </div>
 
                     <div class="section">
@@ -758,23 +756,12 @@
             const file = e.target.files[0];
             if (!file) return;
 
-            const removeBg = document.getElementById('img-remove-bg').checked;
             const isTemplate = document.getElementById('img-template').checked;
 
             showLoading('Loading image...');
 
             try {
-                let imageUrl;
-
-                if (removeBg) {
-                    updateLoadingText('Removing background with AI (this may take a moment)...');
-                    
-                    // Use the correct API from @imgly/background-removal
-                    const blob = await imglyRemoveBackground(file);
-                    imageUrl = URL.createObjectURL(blob);
-                } else {
-                    imageUrl = URL.createObjectURL(file);
-                }
+                const imageUrl = URL.createObjectURL(file);
 
                 fabric.Image.fromURL(imageUrl, function(img) {
                     img.scaleToWidth(200);
@@ -811,11 +798,10 @@
                 });
             } catch (error) {
                 console.error('Error processing image:', error);
-                alert('Error processing image: ' + error.message + '\n\nTry without background removal or use a smaller image.');
+                alert('Error processing image: ' + error.message);
                 hideLoading();
             }
 
-            document.getElementById('img-remove-bg').checked = false;
             document.getElementById('img-template').checked = false;
             e.target.value = '';
         });
