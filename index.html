@@ -5,10 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BatchPoster Pro - by Exera</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
-    <script type="module">
-        import removeBackground from 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/dist/index.mjs';
-        window.removeBackground = removeBackground;
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/dist/index.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
@@ -784,10 +781,10 @@
             try {
                 let imageUrl;
 
-                if (removeBg && typeof window.removeBackground !== 'undefined') {
+                if (removeBg && typeof imglyRemoveBackground !== 'undefined') {
                     updateLoadingText('Removing background with AI (this may take 10-30 seconds)...');
                     try {
-                        const blob = await window.removeBackground(file);
+                        const blob = await imglyRemoveBackground(file);
                         imageUrl = URL.createObjectURL(blob);
                     } catch (bgError) {
                         console.error('Background removal failed:', bgError);
@@ -795,7 +792,7 @@
                         imageUrl = URL.createObjectURL(file);
                     }
                 } else if (removeBg) {
-                    alert('Background removal library is still loading. Please try again in a few seconds.');
+                    alert('Background removal library is still loading. Please wait a few seconds and try again.');
                     hideLoading();
                     e.target.value = '';
                     document.getElementById('img-remove-bg').checked = false;
