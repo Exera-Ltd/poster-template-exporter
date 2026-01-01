@@ -233,7 +233,7 @@
         /* Floating toolbar for selected objects */
         .floating-toolbar {
             position: absolute;
-            top: -60px;
+            top: -70px;
             left: 50%;
             transform: translateX(-50%);
             background: white;
@@ -245,7 +245,8 @@
             z-index: 100;
             align-items: center;
             flex-wrap: wrap;
-            max-width: 90%;
+            max-width: 95%;
+            min-height: 50px;
         }
 
         .floating-toolbar.visible {
@@ -744,6 +745,124 @@
             border-radius: 12px;
             margin-bottom: 20px;
         }
+
+        /* Variation Cards */
+        .variations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .variation-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .variation-card:hover {
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+
+        .variation-header {
+            background: linear-gradient(135deg, #07778F 0%, #073F55 100%);
+            color: white;
+            padding: 12px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .variation-number {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .variation-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: rgba(255,255,255,0.2);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s ease;
+        }
+
+        .icon-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.1);
+        }
+
+        .icon-btn.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .icon-btn.disabled:hover {
+            transform: none;
+        }
+
+        .variation-preview {
+            padding: 40px 20px;
+            background: #f8f9fa;
+            text-align: center;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .preview-placeholder {
+            font-size: 48px;
+            opacity: 0.5;
+        }
+
+        .variation-summary {
+            padding: 15px;
+        }
+
+        .field-summary {
+            padding: 8px 0;
+            font-size: 13px;
+            color: #555;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .field-summary:last-child {
+            border-bottom: none;
+        }
+
+        .field-summary strong {
+            color: #07778F;
+            font-weight: 600;
+        }
+
+        /* Edit Modal Fields */
+        .edit-fields {
+            max-height: 60vh;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .edit-field-group {
+            margin-bottom: 20px;
+        }
+
+        .edit-field-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        /* Old table styles kept for backwards compatibility */
 
         .bulk-data-table {
             width: 100%;
@@ -2217,7 +2336,7 @@
             }
         }
 
-        // Canvas-based crop (like Canva)
+        // Canvas-based crop (like Canva) - FIXED
         let cropMode = false;
         let cropTarget = null;
         let cropRect = null;
@@ -2237,6 +2356,10 @@
             cropMode = true;
             cropTarget = selected;
             
+            // Store original position
+            selected._cropOrigLeft = selected.left;
+            selected._cropOrigTop = selected.top;
+            
             // Disable other interactions
             canvas.selection = false;
             canvas.getObjects().forEach(obj => {
@@ -2253,26 +2376,35 @@
                 lockRotation: true,
                 lockScalingX: true,
                 lockScalingY: true,
-                hasControls: false
+                hasControls: false,
+                selectable: false
             });
             
+            // Get accurate bounds
+            const left = selected.left;
+            const top = selected.top;
+            const width = selected.width * selected.scaleX;
+            const height = selected.height * selected.scaleY;
+            
             // Create crop rectangle overlay
-            const imgBounds = selected.getBoundingRect();
             cropRect = new fabric.Rect({
-                left: imgBounds.left,
-                top: imgBounds.top,
-                width: imgBounds.width,
-                height: imgBounds.height,
+                left: left,
+                top: top,
+                width: width,
+                height: height,
+                originX: 'left',
+                originY: 'top',
                 fill: 'transparent',
                 stroke: '#07778F',
-                strokeWidth: 3,
+                strokeWidth: 3 / canvas.getZoom(),
                 strokeDashArray: [5, 5],
                 cornerColor: '#07778F',
                 cornerSize: 12,
                 transparentCorners: false,
                 lockRotation: true,
                 selectable: true,
-                hasRotatingPoint: false
+                hasRotatingPoint: false,
+                borderColor: '#07778F'
             });
             
             canvas.add(cropRect);
@@ -2293,7 +2425,7 @@
                     ❌ Cancel
                 </button>
                 <div style="margin-left: 15px; font-size: 13px; color: #666; font-weight: 600;">
-                    Drag the corners to adjust crop area
+                    Drag corners to adjust crop area
                 </div>
             `;
         }
@@ -2304,32 +2436,44 @@
             showLoading('Cropping image...');
             
             const img = cropTarget;
-            const crop = cropRect.getBoundingRect();
-            const imgBounds = img.getBoundingRect();
             
-            // Calculate crop area relative to image
-            const relX = (crop.left - imgBounds.left) / img.scaleX;
-            const relY = (crop.top - imgBounds.top) / img.scaleY;
-            const relWidth = crop.width / img.scaleX;
-            const relHeight = crop.height / img.scaleY;
+            // Get crop rectangle dimensions
+            const cropLeft = cropRect.left;
+            const cropTop = cropRect.top;
+            const cropWidth = cropRect.width * cropRect.scaleX;
+            const cropHeight = cropRect.height * cropRect.scaleY;
             
-            // Create temporary canvas for cropped image
+            // Get image dimensions
+            const imgLeft = img.left;
+            const imgTop = img.top;
+            
+            // Calculate crop coordinates relative to the image
+            const offsetX = (cropLeft - imgLeft) / img.scaleX;
+            const offsetY = (cropTop - imgTop) / img.scaleY;
+            const cropW = cropWidth / img.scaleX;
+            const cropH = cropHeight / img.scaleY;
+            
+            // Create temporary canvas
             const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = relWidth;
-            tempCanvas.height = relHeight;
+            tempCanvas.width = Math.max(1, cropW);
+            tempCanvas.height = Math.max(1, cropH);
             const tempCtx = tempCanvas.getContext('2d');
             
             const imgElement = img.getElement();
-            tempCtx.drawImage(imgElement,
-                relX, relY, relWidth, relHeight,
-                0, 0, relWidth, relHeight
+            
+            // Draw the cropped portion
+            tempCtx.drawImage(
+                imgElement,
+                offsetX, offsetY, cropW, cropH,
+                0, 0, cropW, cropH
             );
             
-            // Create new fabric image from cropped canvas
+            // Create new fabric image
             fabric.Image.fromURL(tempCanvas.toDataURL(), function(newImg) {
+                // Position at crop location
                 newImg.set({
-                    left: crop.left,
-                    top: crop.top,
+                    left: cropLeft,
+                    top: cropTop,
                     scaleX: img.scaleX,
                     scaleY: img.scaleY,
                     angle: img.angle,
@@ -2354,6 +2498,7 @@
                 
                 exitCropMode();
                 canvas.setActiveObject(newImg);
+                canvas.renderAll();
                 hideLoading();
             });
         }
@@ -2375,7 +2520,8 @@
                     lockRotation: false,
                     lockScalingX: false,
                     lockScalingY: false,
-                    hasControls: true
+                    hasControls: true,
+                    selectable: true
                 });
             }
             
@@ -2481,78 +2627,310 @@
                 return;
             }
 
-            let tableHTML = `
+            let html = `
                 <div class="bulk-data-section">
-                    <h3 style="margin-bottom: 10px; color: #333; font-size: 18px;">📋 Enter Data for Each Poster</h3>
-                    <p style="color: #666; margin-bottom: 20px; font-size: 14px;">Each row will generate one poster with different content</p>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <div>
+                            <h3 style="margin-bottom: 5px; color: #333; font-size: 18px;">📋 Your Poster Variations</h3>
+                            <p style="color: #666; margin: 0; font-size: 14px;">Create multiple posters with different content. Each card is one poster.</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="addDataRow()" style="width: auto; padding: 12px 24px;">
+                            ➕ Add Variation
+                        </button>
+                    </div>
                     
-                    <div class="bulk-data-table">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th style="width: 50px; text-align: center;">#</th>
+                    <div class="variations-grid">
             `;
 
-            templateFields.forEach(field => {
-                tableHTML += `<th>${field.name} <span style="opacity: 0.7; font-weight: 400;">(${field.type})</span></th>`;
-            });
-
-            tableHTML += `<th style="width: 100px; text-align: center;">Actions</th></tr></thead><tbody>`;
-
-            bulkData.forEach((data, rowIndex) => {
-                tableHTML += `<tr>`;
-                tableHTML += `<td style="text-align: center;"><strong>${rowIndex + 1}</strong></td>`;
-
+            bulkData.forEach((data, index) => {
+                html += `
+                    <div class="variation-card" id="variation-${index}">
+                        <div class="variation-header">
+                            <div class="variation-number">Poster #${index + 1}</div>
+                            <div class="variation-actions">
+                                <button class="icon-btn" onclick="editVariation(${index})" title="Edit">
+                                    ✏️
+                                </button>
+                                <button class="icon-btn" onclick="previewVariation(${index})" title="Preview">
+                                    👁️
+                                </button>
+                                <button class="icon-btn ${bulkData.length <= 1 ? 'disabled' : ''}" onclick="removeDataRow(${index})" ${bulkData.length <= 1 ? 'disabled' : ''} title="Delete">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="variation-preview">
+                            <div class="preview-placeholder">
+                                ${getVariationPreviewIcon(data)}
+                            </div>
+                        </div>
+                        
+                        <div class="variation-summary">
+                `;
+                
+                // Show summary of fields
+                let hasData = false;
                 templateFields.forEach(field => {
-                    if (field.type === 'text') {
-                        tableHTML += `
-                            <td>
-                                <input type="text" 
-                                       placeholder="Enter ${field.name}"
-                                       value="${data[field.name] || ''}"
-                                       onchange="bulkData[${rowIndex}]['${field.name}'] = this.value">
-                            </td>
-                        `;
-                    } else if (field.type === 'image') {
-                        const hasImage = data[field.name];
-                        tableHTML += `
-                            <td style="text-align: center;">
-                                <input type="file" 
-                                       id="bulk-img-${field.name}-${rowIndex}" 
-                                       accept="image/*"
-                                       onchange="handleBulkImage('${field.name}', ${rowIndex}, this)"
-                                       style="display: none;">
-                                <label for="bulk-img-${field.name}-${rowIndex}" class="file-upload-btn ${hasImage ? 'has-file' : ''}">
-                                    ${hasImage ? '✓ Image Selected' : '📁 Choose Image'}
-                                </label>
-                            </td>
-                        `;
+                    if (data[field.name]) {
+                        hasData = true;
+                        if (field.type === 'text') {
+                            const preview = data[field.name].length > 30 ? data[field.name].substring(0, 30) + '...' : data[field.name];
+                            html += `
+                                <div class="field-summary">
+                                    <strong>${field.name}:</strong> ${preview}
+                                </div>
+                            `;
+                        } else if (field.type === 'image') {
+                            html += `
+                                <div class="field-summary">
+                                    <strong>${field.name}:</strong> ✓ Image set
+                                </div>
+                            `;
+                        }
                     }
                 });
-
-                tableHTML += `
-                    <td style="text-align: center;">
-                        <button class="delete-row" onclick="removeDataRow(${rowIndex})" ${bulkData.length <= 1 ? 'disabled' : ''}>
-                            ✕ Remove
-                        </button>
-                    </td>
-                </tr>`;
+                
+                if (!hasData) {
+                    html += `<div class="field-summary" style="color: #999; font-style: italic;">No data yet - click Edit to add</div>`;
+                }
+                
+                html += `
+                        </div>
+                    </div>
+                `;
             });
 
-            tableHTML += `</tbody></table></div>`;
-
-            tableHTML += `
-                <div class="bulk-actions">
-                    <button class="btn btn-secondary" onclick="addDataRow()">
-                        ➕ Add Row
-                    </button>
-                    <button class="btn btn-success" onclick="generateBulk()">
-                        🚀 Generate & Download All (${bulkData.length} poster${bulkData.length > 1 ? 's' : ''})
-                    </button>
+            html += `
+                    </div>
+                    
+                    <div class="bulk-actions" style="margin-top: 30px;">
+                        <button class="btn btn-success" onclick="generateBulk()">
+                            🚀 Generate & Download All (${bulkData.length} poster${bulkData.length > 1 ? 's' : ''})
+                        </button>
+                    </div>
                 </div>
-            </div>`;
+            `;
 
-            bulkContent.innerHTML = tableHTML;
+            bulkContent.innerHTML = html;
+        }
+
+        function getVariationPreviewIcon(data) {
+            let hasText = false;
+            let hasImage = false;
+            
+            templateFields.forEach(field => {
+                if (data[field.name]) {
+                    if (field.type === 'text') hasText = true;
+                    if (field.type === 'image') hasImage = true;
+                }
+            });
+            
+            if (hasText && hasImage) return '📝🖼️';
+            if (hasText) return '📝';
+            if (hasImage) return '🖼️';
+            return '➕';
+        }
+
+        function editVariation(index) {
+            currentEditingIndex = index;
+            const data = bulkData[index];
+            
+            let modalHTML = `
+                <div class="modal active" id="edit-modal">
+                    <div class="modal-content" style="max-width: 800px;">
+                        <h2 style="margin-bottom: 10px;">✏️ Edit Poster #${index + 1}</h2>
+                        <p style="color: #666; margin-bottom: 25px;">Fill in the data for template fields in this poster</p>
+                        
+                        <div class="edit-fields">
+            `;
+            
+            templateFields.forEach(field => {
+                if (field.type === 'text') {
+                    modalHTML += `
+                        <div class="edit-field-group">
+                            <label>${field.name}</label>
+                            <textarea 
+                                id="edit-${field.name}" 
+                                placeholder="Enter ${field.name}"
+                                style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; min-height: 80px; font-family: inherit; resize: vertical;"
+                            >${data[field.name] || ''}</textarea>
+                        </div>
+                    `;
+                } else if (field.type === 'image') {
+                    const hasImage = data[field.name];
+                    modalHTML += `
+                        <div class="edit-field-group">
+                            <label>${field.name}</label>
+                            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                                <input type="file" id="edit-img-${field.name}" accept="image/*" style="display: none;" onchange="handleEditImage('${field.name}', this)">
+                                <label for="edit-img-${field.name}" class="btn btn-secondary" style="width: auto; padding: 10px 20px; cursor: pointer; margin: 0;">
+                                    📁 Choose Image
+                                </label>
+                                <span id="edit-img-status-${field.name}" style="font-size: 13px; color: ${hasImage ? '#28a745' : '#999'}; font-weight: 600;">
+                                    ${hasImage ? '✓ Image Selected' : 'No image selected'}
+                                </span>
+                                <button class="btn btn-secondary" onclick="removeBackgroundInEdit('${field.name}')" style="width: auto; padding: 10px 20px; margin: 0;">
+                                    🎨 Remove BG
+                                </button>
+                            </div>
+                            ${data[field.name] ? `<img src="${data[field.name]}" style="max-width: 200px; max-height: 200px; margin-top: 10px; border-radius: 8px; border: 2px solid #e0e0e0;">` : ''}
+                        </div>
+                    `;
+                }
+            });
+            
+            modalHTML += `
+                        </div>
+                        
+                        <div class="btn-group" style="margin-top: 30px;">
+                            <button class="btn btn-success" onclick="saveVariation()">
+                                ✅ Save Changes
+                            </button>
+                            <button class="btn btn-secondary" onclick="closeEditModal()">
+                                ❌ Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        let currentEditingIndex = -1;
+
+        function handleEditImage(fieldName, input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // Store in temporary editing data
+                if (!window.tempEditData) window.tempEditData = {};
+                window.tempEditData[fieldName] = e.target.result;
+                
+                // Update status
+                document.getElementById(`edit-img-status-${fieldName}`).innerHTML = '✓ Image Selected';
+                document.getElementById(`edit-img-status-${fieldName}`).style.color = '#28a745';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function removeBackgroundInEdit(fieldName) {
+            if (!window.tempEditData || !window.tempEditData[fieldName]) {
+                const currentData = bulkData[currentEditingIndex][fieldName];
+                if (!currentData) {
+                    alert('Please select an image first');
+                    return;
+                }
+                if (!window.tempEditData) window.tempEditData = {};
+                window.tempEditData[fieldName] = currentData;
+            }
+            
+            const apiKey = localStorage.getItem('removebg_api_key') || prompt('Enter your remove.bg API key:');
+            if (!apiKey) return;
+            
+            localStorage.setItem('removebg_api_key', apiKey);
+            showLoading('Removing background...');
+            
+            try {
+                // Convert base64 to blob
+                const response = await fetch(window.tempEditData[fieldName]);
+                const blob = await response.blob();
+                
+                const result = await removeBackgroundWithAPI(blob, apiKey);
+                const imageUrl = URL.createObjectURL(result.blob);
+                
+                // Convert back to base64
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    window.tempEditData[fieldName] = e.target.result;
+                    document.getElementById(`edit-img-status-${fieldName}`).innerHTML = '✓ Background Removed';
+                    hideLoading();
+                    alert('Background removed successfully!');
+                };
+                reader.readAsDataURL(result.blob);
+                
+            } catch (error) {
+                hideLoading();
+                alert('Background removal failed: ' + error.message);
+            }
+        }
+
+        function saveVariation() {
+            const data = bulkData[currentEditingIndex];
+            
+            templateFields.forEach(field => {
+                if (field.type === 'text') {
+                    const value = document.getElementById(`edit-${field.name}`).value;
+                    data[field.name] = value;
+                } else if (field.type === 'image') {
+                    if (window.tempEditData && window.tempEditData[field.name]) {
+                        data[field.name] = window.tempEditData[field.name];
+                    }
+                }
+            });
+            
+            window.tempEditData = {};
+            closeEditModal();
+            renderBulkExportInterface();
+        }
+
+        function closeEditModal() {
+            const modal = document.getElementById('edit-modal');
+            if (modal) modal.remove();
+            window.tempEditData = {};
+        }
+
+        function previewVariation(index) {
+            showLoading('Generating preview...');
+            
+            const data = bulkData[index];
+            const originalState = canvas.toJSON(['templateField', 'templateType']);
+            
+            // Apply variation data
+            templateFields.forEach(field => {
+                if (field.type === 'text' && data[field.name]) {
+                    field.object.set('text', data[field.name]);
+                } else if (field.type === 'image' && data[field.name]) {
+                    fabric.Image.fromURL(data[field.name], function(img) {
+                        const originalObj = field.object;
+                        img.set({
+                            left: originalObj.left,
+                            top: originalObj.top,
+                            scaleX: originalObj.scaleX,
+                            scaleY: originalObj.scaleY,
+                            angle: originalObj.angle
+                        });
+                        canvas.remove(originalObj);
+                        canvas.add(img);
+                        field.object = img;
+                        canvas.renderAll();
+                    });
+                }
+            });
+            
+            canvas.renderAll();
+            hideLoading();
+            
+            // Switch to design tab
+            switchTab('design');
+            
+            // Offer to restore
+            setTimeout(() => {
+                if (confirm('Preview shown in Design tab. Restore original template?')) {
+                    canvas.loadFromJSON(originalState, () => {
+                        canvas.renderAll();
+                        canvas.getObjects().forEach(obj => {
+                            if (obj.templateField) {
+                                const field = templateFields.find(f => f.name === obj.templateField);
+                                if (field) field.object = obj;
+                            }
+                        });
+                    });
+                }
+            }, 500);
         }
 
         function addDataRow() {
@@ -2561,9 +2939,14 @@
         }
 
         function removeDataRow(index) {
-            if (bulkData.length <= 1) return;
-            bulkData.splice(index, 1);
-            renderBulkExportInterface();
+            if (bulkData.length <= 1) {
+                alert('You must have at least one variation');
+                return;
+            }
+            if (confirm(`Delete Poster #${index + 1}?`)) {
+                bulkData.splice(index, 1);
+                renderBulkExportInterface();
+            }
         }
 
         function handleBulkImage(fieldName, index, input) {
@@ -2580,14 +2963,30 @@
 
         async function generateBulk() {
             if (bulkData.length === 0) {
-                alert('Please add at least one row of data');
+                alert('Please add at least one variation');
+                return;
+            }
+            
+            // Validate that at least one variation has data
+            let hasAnyData = false;
+            for (const data of bulkData) {
+                for (const field of templateFields) {
+                    if (data[field.name]) {
+                        hasAnyData = true;
+                        break;
+                    }
+                }
+                if (hasAnyData) break;
+            }
+            
+            if (!hasAnyData) {
+                alert('Please add data to at least one variation before generating');
                 return;
             }
 
             showLoading('Generating posters...');
             
             const zip = new JSZip();
-            const promises = [];
 
             // Get actual canvas dimensions (not viewport)
             const currentZoom = canvas.getZoom();
@@ -2603,91 +3002,101 @@
                 const data = bulkData[i];
                 updateLoadingText(`Generating poster ${i + 1} of ${bulkData.length}...`);
 
-                const promise = new Promise(async (resolve) => {
-                    const originalState = canvas.toJSON(['templateField', 'templateType']);
+                try {
+                    await new Promise(async (resolve, reject) => {
+                        const originalState = canvas.toJSON(['templateField', 'templateType']);
 
-                    for (const field of templateFields) {
-                        if (field.type === 'text' && data[field.name]) {
-                            field.object.set('text', data[field.name]);
-                        } else if (field.type === 'image' && data[field.name]) {
-                            await new Promise((imgResolve) => {
-                                fabric.Image.fromURL(data[field.name], function(img) {
-                                    const originalObj = field.object;
-                                    img.set({
-                                        left: originalObj.left,
-                                        top: originalObj.top,
-                                        scaleX: originalObj.scaleX,
-                                        scaleY: originalObj.scaleY,
-                                        angle: originalObj.angle
+                        // Apply data to template fields
+                        for (const field of templateFields) {
+                            if (field.type === 'text') {
+                                if (data[field.name]) {
+                                    field.object.set('text', data[field.name]);
+                                }
+                            } else if (field.type === 'image') {
+                                if (data[field.name]) {
+                                    await new Promise((imgResolve) => {
+                                        fabric.Image.fromURL(data[field.name], function(img) {
+                                            const originalObj = field.object;
+                                            img.set({
+                                                left: originalObj.left,
+                                                top: originalObj.top,
+                                                scaleX: originalObj.scaleX,
+                                                scaleY: originalObj.scaleY,
+                                                angle: originalObj.angle
+                                            });
+                                            
+                                            canvas.remove(originalObj);
+                                            canvas.add(img);
+                                            field.object = img;
+                                            canvas.renderAll();
+                                            imgResolve();
+                                        });
                                     });
-                                    
-                                    canvas.remove(originalObj);
-                                    canvas.add(img);
-                                    field.object = img;
-                                    canvas.renderAll();
-                                    imgResolve();
-                                });
-                            });
+                                }
+                            }
                         }
-                    }
 
-                    canvas.renderAll();
-
-                    setTimeout(() => {
-                        const templateObjects = canvas.getObjects().filter(obj => obj.templateField);
-                        const originalStrokes = [];
-                        
-                        templateObjects.forEach(obj => {
-                            originalStrokes.push({
-                                obj: obj,
-                                stroke: obj.stroke,
-                                strokeWidth: obj.strokeWidth
-                            });
-                            obj.set({ stroke: null, strokeWidth: 0 });
-                        });
-                        
                         canvas.renderAll();
 
-                        // Export at actual size, not viewport size
-                        const multiplier = exportDimensions.width / actualWidth;
-                        const dataURL = canvas.toDataURL({
-                            format: 'png',
-                            quality: 1,
-                            multiplier: multiplier
-                        });
-
-                        originalStrokes.forEach(item => {
-                            item.obj.set({ 
-                                stroke: item.stroke, 
-                                strokeWidth: item.strokeWidth 
+                        // Wait for render
+                        setTimeout(() => {
+                            const templateObjects = canvas.getObjects().filter(obj => obj.templateField);
+                            const originalStrokes = [];
+                            
+                            templateObjects.forEach(obj => {
+                                originalStrokes.push({
+                                    obj: obj,
+                                    stroke: obj.stroke,
+                                    strokeWidth: obj.strokeWidth
+                                });
+                                obj.set({ stroke: null, strokeWidth: 0 });
                             });
-                        });
+                            
+                            canvas.renderAll();
 
-                        fetch(dataURL)
-                            .then(res => res.blob())
-                            .then(blob => {
-                                zip.file(`poster_${i + 1}.png`, blob);
-                                
-                                canvas.loadFromJSON(originalState, () => {
-                                    canvas.renderAll();
-                                    canvas.getObjects().forEach(obj => {
-                                        if (obj.templateField) {
-                                            const field = templateFields.find(f => f.name === obj.templateField);
-                                            if (field) {
-                                                field.object = obj;
-                                            }
-                                        }
-                                    });
-                                    resolve();
+                            // Export at actual size
+                            const multiplier = exportDimensions.width / actualWidth;
+                            const dataURL = canvas.toDataURL({
+                                format: 'png',
+                                quality: 1,
+                                multiplier: multiplier
+                            });
+
+                            // Restore strokes
+                            originalStrokes.forEach(item => {
+                                item.obj.set({ 
+                                    stroke: item.stroke, 
+                                    strokeWidth: item.strokeWidth 
                                 });
                             });
-                    }, 100);
-                });
 
-                promises.push(promise);
+                            fetch(dataURL)
+                                .then(res => res.blob())
+                                .then(blob => {
+                                    zip.file(`poster_${i + 1}.png`, blob);
+                                    
+                                    // Restore original state
+                                    canvas.loadFromJSON(originalState, () => {
+                                        canvas.renderAll();
+                                        canvas.getObjects().forEach(obj => {
+                                            if (obj.templateField) {
+                                                const field = templateFields.find(f => f.name === obj.templateField);
+                                                if (field) {
+                                                    field.object = obj;
+                                                }
+                                            }
+                                        });
+                                        resolve();
+                                    });
+                                })
+                                .catch(reject);
+                        }, 200);
+                    });
+                } catch (error) {
+                    console.error(`Error generating poster ${i + 1}:`, error);
+                    alert(`Error generating poster ${i + 1}. Continuing with others...`);
+                }
             }
-
-            await Promise.all(promises);
 
             updateLoadingText('Creating ZIP file...');
             
@@ -2695,6 +3104,9 @@
                 saveAs(content, 'posters_' + Date.now() + '.zip');
                 hideLoading();
                 alert(`✅ Successfully generated ${bulkData.length} poster${bulkData.length > 1 ? 's' : ''}!`);
+            }).catch(error => {
+                hideLoading();
+                alert('Error creating ZIP file: ' + error.message);
             });
         }
 
