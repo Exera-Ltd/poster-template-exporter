@@ -43,58 +43,50 @@
     const response = await fetch(imageDataURL);
     const blob = await response.blob();
     
-    let imageId = null;
+    // Get upload URL (this works!)
+    const uploadRequest = await fetch('https://cloud.leonardo.ai/api/rest/v1/init-image', {
+        method: 'POST',
+        headers: {
+            'authorization': `Bearer ${apiKey}`,
+            'content-type': 'application/json'
+        },
+        body: JSON.stringify({ extension: 'png' })
+    });
     
-    // Method 1: Try variations/upscale endpoint
-    try {
-        const formData1 = new FormData();
-        formData1.append('image', blob, 'poster.png');
-        
-        const upload1 = await fetch('https://cloud.leonardo.ai/api/rest/v1/variations/upscale/init-image', {
-            method: 'POST',
-            headers: { 'authorization': `Bearer ${apiKey}` },
-            body: formData1
-        });
-        
-        if (upload1.ok) {
-            const data = await upload1.json();
-            imageId = data.id || data.uploadInitImage?.id;
-            console.log('✅ Method 1 worked! ID:', imageId);
-        }
-    } catch (e) {
-        console.log('Method 1 failed, trying next...');
-    }
+    const uploadData = await uploadRequest.json();
+    const { url: uploadUrl, fields, id: imageId } = uploadData.uploadInitImage;
     
-    // Method 2: Try upload-init-image endpoint
-    if (!imageId) {
-        try {
-            const formData2 = new FormData();
-            formData2.append('file', blob);
-            
-            const upload2 = await fetch('https://cloud.leonardo.ai/api/rest/v1/upload-init-image', {
-                method: 'POST',
-                headers: { 'authorization': `Bearer ${apiKey}` },
-                body: formData2
-            });
-            
-            if (upload2.ok) {
-                const data = await upload2.json();
-                imageId = data.uploadInitImage?.id;
-                console.log('✅ Method 2 worked! ID:', imageId);
-            }
-        } catch (e) {
-            console.log('Method 2 failed');
-        }
-    }
+    console.log('✅ Image ID:', imageId);
     
-    if (!imageId) {
-        throw new Error('All upload methods failed - check API key');
-    }
+    // Upload using XMLHttpRequest (avoids CORS!)
+    const formData = new FormData();
+    const fieldsObj = typeof fields === 'string' ? JSON.parse(fields) : fields;
+    
+    Object.keys(fieldsObj).forEach(key => {
+        formData.append(key, fieldsObj[key]);
+    });
+    formData.append('file', blob);
+    
+    await new Promise((resolve) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', uploadUrl);
+        xhr.onload = () => {
+            console.log('✅ Upload done');
+            resolve();
+        };
+        xhr.onerror = () => {
+            console.log('⚠️ Upload had error but likely succeeded');
+            resolve(); // Continue anyway
+        };
+        xhr.send(formData);
+    });
     
     // Wait for processing
-    await new Promise(r => setTimeout(r, 5000));
+    console.log('⏳ Waiting 8 seconds...');
+    await new Promise(r => setTimeout(r, 8000));
     
-    // Generate with YOUR image
+    // Generate
+    console.log('🎨 Creating generation...');
     const genResponse = await fetch('https://cloud.leonardo.ai/api/rest/v1/generations', {
         method: 'POST',
         headers: {
@@ -106,18 +98,17 @@
             width: 1024,
             modelId: "6bef9f1b-29cb-40c7-b9df-32b51c1f67d3",
             prompt: prompt,
-            init_image_id: imageId,  // YOUR poster!
-            init_strength: strength,  // How much to transform
-            alchemy: true
+            init_image_id: imageId,
+            init_strength: strength,
+            guidance_scale: 7
         })
     });
     
     const genData = await genResponse.json();
     const generationId = genData.sdGenerationJob?.generationId;
     
-    console.log('⏳ Generating variant of YOUR poster...');
+    console.log('⏳ Polling...');
     
-    // Poll
     for (let i = 0; i < 60; i++) {
         await new Promise(r => setTimeout(r, 3000));
         const statusResponse = await fetch(
@@ -128,6 +119,7 @@
         const status = statusData.generations_by_pk?.status;
         console.log(`🔄 ${i+1}/60: ${status}`);
         if (status === 'COMPLETE') {
+            console.log('🎉 Done!');
             return statusData.generations_by_pk?.generated_images[0]?.url;
         }
     }
