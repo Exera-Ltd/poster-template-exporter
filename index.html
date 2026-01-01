@@ -38,60 +38,79 @@
          }
          
          async function generateLeonardoVariant(imageDataURL, apiKey, prompt, strength = 0.5) {
+    console.log('🎨 Starting image-to-image generation...');
+    
     const response = await fetch(imageDataURL);
     const blob = await response.blob();
     
-    // Upload with REQUIRED extension parameter
-    const uploadFormData = new FormData();
-    uploadFormData.append('extension', 'png');  // ← THIS WAS MISSING!
-    uploadFormData.append('file', blob, 'image.png');
-    
-    const uploadResponse = await fetch('https://cloud.leonardo.ai/api/rest/v1/init-image', {
+    // Step 1: Request upload URL from Leonardo
+    const uploadRequestResponse = await fetch('https://cloud.leonardo.ai/api/rest/v1/init-image', {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'Accept': 'application/json'
+            'accept': 'application/json',
+            'authorization': `Bearer ${apiKey}`,
+            'content-type': 'application/json'
         },
-        body: uploadFormData
+        body: JSON.stringify({ extension: 'png' })
     });
     
-    const uploadData = await uploadResponse.json();
-    const initImageId = uploadData.uploadInitImage?.id;
+    const uploadRequestData = await uploadRequestResponse.json();
+    const uploadUrl = uploadRequestData.uploadInitImage?.url;
+    const imageId = uploadRequestData.uploadInitImage?.id;
+    const fields = uploadRequestData.uploadInitImage?.fields;
     
-    // Generate
-    const generateResponse = await fetch('https://cloud.leonardo.ai/api/rest/v1/generations', {
+    console.log('✅ Got upload URL, Image ID:', imageId);
+    
+    // Step 2: Upload to S3
+    const formData = new FormData();
+    const fieldsObj = typeof fields === 'string' ? JSON.parse(fields) : fields;
+    for (const [key, value] of Object.entries(fieldsObj)) {
+        formData.append(key, value);
+    }
+    formData.append('file', blob, 'image.png');
+    
+    await fetch(uploadUrl, { method: 'POST', body: formData });
+    console.log('✅ Uploaded to S3');
+    
+    // Step 3: Wait for processing
+    await new Promise(r => setTimeout(r, 5000));
+    
+    // Step 4: Generate with your uploaded image
+    const genResponse = await fetch('https://cloud.leonardo.ai/api/rest/v1/generations', {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json'
+            'authorization': `Bearer ${apiKey}`,
+            'content-type': 'application/json'
         },
         body: JSON.stringify({
-            prompt: prompt || "professional poster design, vibrant colors",
-            num_images: 1,
-            width: 1024,
             height: 1024,
-            init_image_id: initImageId,
+            width: 1024,
+            modelId: "6bef9f1b-29cb-40c7-b9df-32b51c1f67d3",
+            prompt: prompt || "enhanced design, vibrant colors, professional",
+            init_image_id: imageId,
             init_strength: strength,
-            modelId: "6bef9f1b-29cb-40c7-b9df-32b51c1f67d3"
+            alchemy: true
         })
     });
     
-    const generateData = await generateResponse.json();
-    const generationId = generateData.sdGenerationJob?.generationId;
+    const genResult = await genResponse.json();
+    const generationId = genResult.sdGenerationJob?.generationId;
     
-    // Poll for completion
+    console.log('⏳ Generating variant...');
+    
+    // Step 5: Poll for result
     for (let i = 0; i < 60; i++) {
-        await new Promise(r => setTimeout(r, 2000));
+        await new Promise(r => setTimeout(r, 3000));
         const statusResponse = await fetch(
             `https://cloud.leonardo.ai/api/rest/v1/generations/${generationId}`,
-            { headers: { 'Authorization': `Bearer ${apiKey}` } }
+            { headers: { 'authorization': `Bearer ${apiKey}` } }
         );
         const statusData = await statusResponse.json();
         if (statusData.generations_by_pk?.status === 'COMPLETE') {
-            return statusData.generations_by_pk.generated_images[0]?.url;
+            console.log('🎉 Done!');
+            return statusData.generations_by_pk?.generated_images[0]?.url;
         }
     }
-    throw new Error('Timeout');
 }
       </script>
       <style>
