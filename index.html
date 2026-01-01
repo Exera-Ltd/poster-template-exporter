@@ -38,126 +38,69 @@
          }
          
          async function generateLeonardoVariant(imageDataURL, apiKey, prompt, strength = 0.5) {
-    try {
-        console.log('🎨 Starting image-to-image generation...');
-        
-        const response = await fetch(imageDataURL);
-        const blob = await response.blob();
-        console.log('✅ Image blob created:', blob.size, 'bytes');
-        
-        // Step 1: Request upload URL
-        const uploadRequestResponse = await fetch('https://cloud.leonardo.ai/api/rest/v1/init-image', {
-            method: 'POST',
-            headers: {
-                'accept': 'application/json',
-                'authorization': `Bearer ${apiKey}`,
-                'content-type': 'application/json'
-            },
-            body: JSON.stringify({ extension: 'png' })
-        });
-        
-        const uploadRequestData = await uploadRequestResponse.json();
-        console.log('📋 Upload request response:', uploadRequestData);
-        
-        const uploadUrl = uploadRequestData.uploadInitImage?.url;
-        const imageId = uploadRequestData.uploadInitImage?.id;
-        const fields = uploadRequestData.uploadInitImage?.fields;
-        
-        console.log('✅ Got upload URL, Image ID:', imageId);
-        
-        // Step 2: Upload to S3
-        const formData = new FormData();
-        const fieldsObj = typeof fields === 'string' ? JSON.parse(fields) : fields;
-        for (const [key, value] of Object.entries(fieldsObj)) {
-            formData.append(key, value);
+    console.log('🎨 Starting image-to-image generation...');
+    
+    // Extract base64 from dataURL
+    const base64Data = imageDataURL.split(',')[1];
+    
+    // Upload via base64 (NO CORS ISSUES!)
+    const uploadResponse = await fetch('https://cloud.leonardo.ai/api/rest/v1/init-image', {
+        method: 'POST',
+        headers: {
+            'accept': 'application/json',
+            'authorization': `Bearer ${apiKey}`,
+            'content-type': 'application/json'
+        },
+        body: JSON.stringify({
+            extension: 'png',
+            base64: base64Data  // ← This bypasses S3!
+        })
+    });
+    
+    const uploadData = await uploadResponse.json();
+    const imageId = uploadData.uploadInitImage?.id;
+    
+    console.log('✅ Uploaded! ID:', imageId);
+    
+    // Wait for processing
+    await new Promise(r => setTimeout(r, 5000));
+    
+    // Create generation
+    const genResponse = await fetch('https://cloud.leonardo.ai/api/rest/v1/generations', {
+        method: 'POST',
+        headers: {
+            'authorization': `Bearer ${apiKey}`,
+            'content-type': 'application/json'
+        },
+        body: JSON.stringify({
+            height: 1024,
+            width: 1024,
+            modelId: "6bef9f1b-29cb-40c7-b9df-32b51c1f67d3",
+            prompt: prompt || "enhanced design, vibrant colors, professional",
+            init_image_id: imageId,
+            init_strength: strength,
+            alchemy: true
+        })
+    });
+    
+    const genResult = await genResponse.json();
+    const generationId = genResult.sdGenerationJob?.generationId;
+    
+    console.log('⏳ Generating...');
+    
+    // Poll for result
+    for (let i = 0; i < 60; i++) {
+        await new Promise(r => setTimeout(r, 3000));
+        const statusResponse = await fetch(
+            `https://cloud.leonardo.ai/api/rest/v1/generations/${generationId}`,
+            { headers: { 'authorization': `Bearer ${apiKey}` } }
+        );
+        const statusData = await statusResponse.json();
+        const status = statusData.generations_by_pk?.status;
+        console.log(`🔄 ${i + 1}/60: ${status}`);
+        if (status === 'COMPLETE') {
+            return statusData.generations_by_pk?.generated_images[0]?.url;
         }
-        formData.append('file', blob, 'image.png');
-        
-        const s3Response = await fetch(uploadUrl, { 
-            method: 'POST', 
-            body: formData 
-        });
-        
-        console.log('✅ S3 upload response status:', s3Response.status);
-        // Note: S3 returns 204 or shows XML - both are fine!
-        
-        // Step 3: Wait for Leonardo to process
-        console.log('⏳ Waiting 5 seconds for image processing...');
-        await new Promise(r => setTimeout(r, 5000));
-        
-        // Step 4: Create generation WITH YOUR IMAGE
-        console.log('🎨 Creating generation with init image...');
-        
-        const genResponse = await fetch('https://cloud.leonardo.ai/api/rest/v1/generations', {
-            method: 'POST',
-            headers: {
-                'accept': 'application/json',
-                'authorization': `Bearer ${apiKey}`,
-                'content-type': 'application/json'
-            },
-            body: JSON.stringify({
-                height: 1024,
-                width: 1024,
-                modelId: "6bef9f1b-29cb-40c7-b9df-32b51c1f67d3",
-                prompt: prompt || "enhanced design, vibrant colors, professional aesthetic",
-                num_images: 1,
-                init_image_id: imageId,  // ← YOUR UPLOADED IMAGE
-                init_strength: strength,  // ← HOW MUCH TO TRANSFORM
-                presetStyle: "DYNAMIC",
-                alchemy: true,
-                guidance_scale: 7
-            })
-        });
-        
-        if (!genResponse.ok) {
-            const errorText = await genResponse.text();
-            console.error('❌ Generation failed:', errorText);
-            throw new Error(`Generation failed: ${errorText}`);
-        }
-        
-        const genResult = await genResponse.json();
-        console.log('✅ Generation created:', genResult);
-        
-        const generationId = genResult.sdGenerationJob?.generationId;
-        console.log('🎯 Generation ID:', generationId);
-        
-        // Step 5: Poll for completion
-        console.log('⏳ Polling for result (30-90 seconds)...');
-        
-        for (let i = 0; i < 60; i++) {
-            await new Promise(r => setTimeout(r, 3000));
-            
-            const statusResponse = await fetch(
-                `https://cloud.leonardo.ai/api/rest/v1/generations/${generationId}`,
-                {
-                    headers: {
-                        'accept': 'application/json',
-                        'authorization': `Bearer ${apiKey}`
-                    }
-                }
-            );
-            
-            const statusData = await statusResponse.json();
-            const status = statusData.generations_by_pk?.status;
-            
-            console.log(`🔄 Poll ${i + 1}/60: ${status}`);
-            
-            if (status === 'COMPLETE') {
-                const imageUrl = statusData.generations_by_pk?.generated_images[0]?.url;
-                console.log('🎉 COMPLETE! Image URL:', imageUrl);
-                return imageUrl;
-            }
-            
-            if (status === 'FAILED') {
-                throw new Error('Generation failed');
-            }
-        }
-        
-        throw new Error('Timeout after 3 minutes');
-        
-    } catch (error) {
-        console.error('❌ Error:', error);
-        throw error;
     }
 }
       </script>
