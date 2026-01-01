@@ -38,34 +38,63 @@
          }
          
          async function generateLeonardoVariant(imageDataURL, apiKey, prompt, strength = 0.5) {
-    console.log('🎨 Starting image-to-image generation...');
+    console.log('🎨 Starting generation...');
     
-    // Extract base64 from dataURL
-    const base64Data = imageDataURL.split(',')[1];
+    const response = await fetch(imageDataURL);
+    const blob = await response.blob();
     
-    // Upload via base64 (NO CORS ISSUES!)
-    const uploadResponse = await fetch('https://cloud.leonardo.ai/api/rest/v1/init-image', {
-        method: 'POST',
-        headers: {
-            'accept': 'application/json',
-            'authorization': `Bearer ${apiKey}`,
-            'content-type': 'application/json'
-        },
-        body: JSON.stringify({
-            extension: 'png',
-            base64: base64Data  // ← This bypasses S3!
-        })
-    });
+    let imageId = null;
     
-    const uploadData = await uploadResponse.json();
-    const imageId = uploadData.uploadInitImage?.id;
+    // Method 1: Try variations/upscale endpoint
+    try {
+        const formData1 = new FormData();
+        formData1.append('image', blob, 'poster.png');
+        
+        const upload1 = await fetch('https://cloud.leonardo.ai/api/rest/v1/variations/upscale/init-image', {
+            method: 'POST',
+            headers: { 'authorization': `Bearer ${apiKey}` },
+            body: formData1
+        });
+        
+        if (upload1.ok) {
+            const data = await upload1.json();
+            imageId = data.id || data.uploadInitImage?.id;
+            console.log('✅ Method 1 worked! ID:', imageId);
+        }
+    } catch (e) {
+        console.log('Method 1 failed, trying next...');
+    }
     
-    console.log('✅ Uploaded! ID:', imageId);
+    // Method 2: Try upload-init-image endpoint
+    if (!imageId) {
+        try {
+            const formData2 = new FormData();
+            formData2.append('file', blob);
+            
+            const upload2 = await fetch('https://cloud.leonardo.ai/api/rest/v1/upload-init-image', {
+                method: 'POST',
+                headers: { 'authorization': `Bearer ${apiKey}` },
+                body: formData2
+            });
+            
+            if (upload2.ok) {
+                const data = await upload2.json();
+                imageId = data.uploadInitImage?.id;
+                console.log('✅ Method 2 worked! ID:', imageId);
+            }
+        } catch (e) {
+            console.log('Method 2 failed');
+        }
+    }
+    
+    if (!imageId) {
+        throw new Error('All upload methods failed - check API key');
+    }
     
     // Wait for processing
     await new Promise(r => setTimeout(r, 5000));
     
-    // Create generation
+    // Generate with YOUR image
     const genResponse = await fetch('https://cloud.leonardo.ai/api/rest/v1/generations', {
         method: 'POST',
         headers: {
@@ -76,19 +105,19 @@
             height: 1024,
             width: 1024,
             modelId: "6bef9f1b-29cb-40c7-b9df-32b51c1f67d3",
-            prompt: prompt || "enhanced design, vibrant colors, professional",
-            init_image_id: imageId,
-            init_strength: strength,
+            prompt: prompt,
+            init_image_id: imageId,  // YOUR poster!
+            init_strength: strength,  // How much to transform
             alchemy: true
         })
     });
     
-    const genResult = await genResponse.json();
-    const generationId = genResult.sdGenerationJob?.generationId;
+    const genData = await genResponse.json();
+    const generationId = genData.sdGenerationJob?.generationId;
     
-    console.log('⏳ Generating...');
+    console.log('⏳ Generating variant of YOUR poster...');
     
-    // Poll for result
+    // Poll
     for (let i = 0; i < 60; i++) {
         await new Promise(r => setTimeout(r, 3000));
         const statusResponse = await fetch(
@@ -97,7 +126,7 @@
         );
         const statusData = await statusResponse.json();
         const status = statusData.generations_by_pk?.status;
-        console.log(`🔄 ${i + 1}/60: ${status}`);
+        console.log(`🔄 ${i+1}/60: ${status}`);
         if (status === 'COMPLETE') {
             return statusData.generations_by_pk?.generated_images[0]?.url;
         }
