@@ -38,61 +38,61 @@
          }
          
          async function generateLeonardoVariant(imageDataURL, apiKey, prompt, strength = 0.5) {
-         const response = await fetch(imageDataURL);
-         const blob = await response.blob();
-         
-         const uploadFormData = new FormData();
-         uploadFormData.append('init_image', blob);
-         
-         const uploadResponse = await fetch('https://cloud.leonardo.ai/api/rest/v1/init-image', {
-             method: 'POST',
-             headers: {
-                 'Authorization': `Bearer ${apiKey}`,
-                 'Accept': 'application/json'
-             },
-             body: uploadFormData
-         });
-         
-         if (!uploadResponse.ok) throw new Error(`Upload failed`);
-         
-         const uploadData = await uploadResponse.json();
-         const initImageId = uploadData.uploadInitImage?.id;
-         if (!initImageId) throw new Error('Failed to get init image ID');
-         
-         const generateResponse = await fetch('https://cloud.leonardo.ai/api/rest/v1/generations', {
-             method: 'POST',
-             headers: {
-                 'Authorization': `Bearer ${apiKey}`,
-                 'Content-Type': 'application/json'
-             },
-             body: JSON.stringify({
-                 prompt: prompt || "professional poster design, vibrant colors",
-                 num_images: 1,
-                 width: 1024,
-                 height: 1024,
-                 init_image_id: initImageId,
-                 init_strength: strength,
-                 model_id: "6bef9f1b-29cb-40c7-b9df-32b51c1f67d3"
-             })
-         });
-         
-         const generateData = await generateResponse.json();
-         const generationId = generateData.sdGenerationJob?.generationId;
-         
-         // Poll for completion
-         for (let i = 0; i < 60; i++) {
-             await new Promise(r => setTimeout(r, 2000));
-             const statusResponse = await fetch(
-                 `https://cloud.leonardo.ai/api/rest/v1/generations/${generationId}`,
-                 { headers: { 'Authorization': `Bearer ${apiKey}` } }
-             );
-             const statusData = await statusResponse.json();
-             if (statusData.generations_by_pk?.status === 'COMPLETE') {
-                 return statusData.generations_by_pk.generated_images[0]?.url;
-             }
-         }
-         throw new Error('Timeout');
-         }
+    const response = await fetch(imageDataURL);
+    const blob = await response.blob();
+    
+    // Upload with REQUIRED extension parameter
+    const uploadFormData = new FormData();
+    uploadFormData.append('extension', 'png');  // ← THIS WAS MISSING!
+    uploadFormData.append('file', blob, 'image.png');
+    
+    const uploadResponse = await fetch('https://cloud.leonardo.ai/api/rest/v1/init-image', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Accept': 'application/json'
+        },
+        body: uploadFormData
+    });
+    
+    const uploadData = await uploadResponse.json();
+    const initImageId = uploadData.uploadInitImage?.id;
+    
+    // Generate
+    const generateResponse = await fetch('https://cloud.leonardo.ai/api/rest/v1/generations', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            prompt: prompt || "professional poster design, vibrant colors",
+            num_images: 1,
+            width: 1024,
+            height: 1024,
+            init_image_id: initImageId,
+            init_strength: strength,
+            modelId: "6bef9f1b-29cb-40c7-b9df-32b51c1f67d3"
+        })
+    });
+    
+    const generateData = await generateResponse.json();
+    const generationId = generateData.sdGenerationJob?.generationId;
+    
+    // Poll for completion
+    for (let i = 0; i < 60; i++) {
+        await new Promise(r => setTimeout(r, 2000));
+        const statusResponse = await fetch(
+            `https://cloud.leonardo.ai/api/rest/v1/generations/${generationId}`,
+            { headers: { 'Authorization': `Bearer ${apiKey}` } }
+        );
+        const statusData = await statusResponse.json();
+        if (statusData.generations_by_pk?.status === 'COMPLETE') {
+            return statusData.generations_by_pk.generated_images[0]?.url;
+        }
+    }
+    throw new Error('Timeout');
+}
       </script>
       <style>
          * {
