@@ -3,221 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BatchPoster Pro AI v2.0 - FINAL</title>
+    <title>BatchPoster Pro - Canvas Mode VERIFIED</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            overflow-x: hidden;
+            min-height: 100vh;
         }
-
-        #particles-js {
+        
+        .version-badge {
             position: fixed;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-            top: 0;
-            left: 0;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.9);
+            color: #00ff00;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 10000;
         }
-
+        
         .container {
-            position: relative;
-            z-index: 1;
-            max-width: 1600px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
         }
-
+        
         .header {
             text-align: center;
             color: white;
             margin-bottom: 30px;
-            padding: 30px 20px;
-            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            background: rgba(255,255,255,0.1);
             backdrop-filter: blur(10px);
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .header h1 {
-            font-size: 48px;
-            font-weight: 800;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-
-        .ai-badge {
-            display: inline-block;
-            background: linear-gradient(135deg, #ff6b6b, #feca57);
-            color: white;
-            padding: 6px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: bold;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        .version-tag {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            background: rgba(0,0,0,0.8);
-            color: white;
-            padding: 5px 12px;
             border-radius: 15px;
-            font-size: 11px;
-            font-weight: bold;
-            z-index: 5000;
         }
-
-        .header p {
-            font-size: 18px;
-            opacity: 0.95;
+        
+        .header h1 {
+            font-size: 42px;
+            margin-bottom: 10px;
         }
-
-        .main-content {
+        
+        .main-grid {
             display: grid;
             grid-template-columns: 300px 1fr;
             gap: 20px;
-            margin-bottom: 20px;
         }
-
+        
         .sidebar {
             background: white;
             border-radius: 15px;
             padding: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             height: fit-content;
-            max-height: calc(100vh - 200px);
-            overflow-y: auto;
         }
-
+        
         .workspace {
             background: white;
             border-radius: 15px;
             padding: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
-
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #e0e0e0;
-        }
-
-        .tab {
-            padding: 12px 24px;
-            background: none;
-            border: none;
-            font-size: 16px;
-            font-weight: 600;
-            color: #666;
-            cursor: pointer;
-            border-bottom: 3px solid transparent;
-            transition: all 0.3s;
-        }
-
-        .tab.active {
-            color: #667eea;
-            border-bottom-color: #667eea;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
+        
         .section {
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             padding: 15px;
             background: #f8f9fa;
             border-radius: 10px;
         }
-
+        
         .section-title {
             font-size: 14px;
             font-weight: 700;
             color: #333;
             margin-bottom: 12px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
-
-        .quick-add-grid {
+        
+        .btn-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 10px;
         }
-
-        .quick-add-btn {
+        
+        .btn {
             padding: 15px;
             border: 2px solid #e0e0e0;
-            border-radius: 10px;
+            border-radius: 8px;
             background: white;
             cursor: pointer;
-            transition: all 0.3s;
             text-align: center;
+            transition: all 0.3s;
+            font-size: 13px;
+            font-weight: 600;
         }
-
-        .quick-add-btn:hover {
+        
+        .btn:hover {
             border-color: #667eea;
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
         }
-
-        .quick-add-btn .icon {
-            font-size: 24px;
-            margin-bottom: 5px;
-        }
-
-        .quick-add-btn .label {
-            font-size: 12px;
-            font-weight: 600;
-            color: #666;
-        }
-
-        .quick-add-btn.ai-generate {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        
+        .btn-ai {
+            background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
             border: none;
         }
-
-        .quick-add-btn.ai-generate .label {
-            color: white;
-        }
-
-        .quick-add-btn.ai-generate:hover {
-            transform: translateY(-2px) scale(1.02);
-        }
-
+        
         .form-group {
             margin-bottom: 15px;
         }
-
+        
         .form-group label {
             display: block;
             font-size: 12px;
@@ -225,76 +122,25 @@
             color: #555;
             margin-bottom: 6px;
         }
-
+        
         .form-group input[type="text"],
-        .form-group input[type="number"],
         .form-group input[type="password"],
-        .form-group input[type="file"],
-        .form-group input[type="color"],
-        .form-group select,
-        .form-group textarea {
+        .form-group input[type="number"],
+        .form-group textarea,
+        .form-group select {
             width: 100%;
             padding: 10px;
             border: 2px solid #e0e0e0;
             border-radius: 8px;
             font-size: 14px;
-            transition: border-color 0.3s;
         }
-
+        
         .form-group input:focus,
-        .form-group select:focus,
         .form-group textarea:focus {
             outline: none;
             border-color: #667eea;
         }
-
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            width: 100%;
-        }
-
-        .btn-primary {
-            background: #667eea;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-success {
-            background: #28a745;
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #218838;
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-
-        .btn-ai {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-ai:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
-        }
-
+        
         .canvas-container {
             background: #f0f0f0;
             border-radius: 10px;
@@ -304,44 +150,11 @@
             align-items: center;
             min-height: 600px;
         }
-
+        
         #canvas {
             box-shadow: 0 5px 20px rgba(0,0,0,0.1);
         }
-
-        .floating-toolbar {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: white;
-            padding: 15px 25px;
-            border-radius: 50px;
-            box-shadow: 0 5px 30px rgba(0,0,0,0.2);
-            display: none;
-            z-index: 1000;
-            gap: 15px;
-            align-items: center;
-        }
-
-        .floating-toolbar.active {
-            display: flex;
-        }
-
-        .toolbar-btn {
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-            padding: 8px 12px;
-            border-radius: 8px;
-            transition: all 0.2s;
-        }
-
-        .toolbar-btn:hover {
-            background: #f0f0f0;
-        }
-
+        
         .modal {
             display: none;
             position: fixed;
@@ -354,11 +167,9 @@
             justify-content: center;
             align-items: center;
         }
-
-        .modal.active {
-            display: flex;
-        }
-
+        
+        .modal.active { display: flex; }
+        
         .modal-content {
             background: white;
             padding: 30px;
@@ -368,47 +179,7 @@
             max-height: 90vh;
             overflow-y: auto;
         }
-
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        .mode-btn {
-            flex: 1;
-            min-width: 140px;
-            background: #e0e0e0;
-            color: #666;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-
-        .mode-btn.active {
-            background: #667eea;
-            color: white;
-        }
-
-        .ai-info-box {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
-            border-left: 4px solid #667eea;
-            padding: 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            color: #4a5568;
-            margin-top: 12px;
-        }
-
-        .ai-info-box strong {
-            display: block;
-            margin-bottom: 5px;
-            color: #667eea;
-        }
-
+        
         .loading {
             display: none;
             position: fixed;
@@ -421,16 +192,14 @@
             justify-content: center;
             align-items: center;
         }
-
-        .loading.active {
-            display: flex;
-        }
-
+        
+        .loading.active { display: flex; }
+        
         .loading-content {
             text-align: center;
             color: white;
         }
-
+        
         .spinner {
             width: 60px;
             height: 60px;
@@ -440,216 +209,153 @@
             animation: spin 1s linear infinite;
             margin: 0 auto 20px;
         }
-
+        
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-
+        
         .notification {
             position: fixed;
             top: 20px;
-            right: 20px;
+            right: 80px;
             background: white;
             padding: 15px 20px;
             border-radius: 10px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.3);
             z-index: 4000;
             display: none;
-            animation: slideIn 0.3s;
         }
-
-        @keyframes slideIn {
-            from {
-                transform: translateX(400px);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
+        
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            margin-top: 10px;
         }
-
-        @media (max-width: 1024px) {
-            .main-content {
-                grid-template-columns: 1fr;
-            }
-
-            .header h1 {
-                font-size: 32px;
-            }
+        
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
-    <div class="version-tag">v2.0 FINAL - Image-to-Image</div>
-    <div id="particles-js"></div>
-
+    <div class="version-badge">✅ CANVAS MODE - VERIFIED API</div>
+    
     <div class="container">
         <div class="header">
-            <h1>
-                BatchPoster Pro
-                <span class="ai-badge">✨ AI POWERED</span>
-            </h1>
-            <p>Design once, export hundreds with AI-generated variants</p>
+            <h1>🎨 BatchPoster Pro - Canvas Mode</h1>
+            <p>Precise inpainting with Leonardo AI - Change specific areas only!</p>
         </div>
-
-        <div class="main-content">
+        
+        <div class="main-grid">
             <!-- Sidebar -->
             <div class="sidebar">
-                <!-- Quick Add Section -->
                 <div class="section">
-                    <div class="section-title">⚡ Quick Add</div>
-                    <div class="quick-add-grid">
-                        <div class="quick-add-btn" onclick="addText()">
-                            <div class="icon">T</div>
-                            <div class="label">Text</div>
-                        </div>
-                        <div class="quick-add-btn" onclick="document.getElementById('image-upload').click()">
-                            <div class="icon">🖼️</div>
-                            <div class="label">Image</div>
-                        </div>
-                        <div class="quick-add-btn" onclick="document.getElementById('bg-upload').click()">
-                            <div class="icon">🎨</div>
-                            <div class="label">Background</div>
-                        </div>
-                        <div class="quick-add-btn" onclick="addShape()">
-                            <div class="icon">⬛</div>
-                            <div class="label">Shape</div>
-                        </div>
-                        <div class="quick-add-btn ai-generate" onclick="openAIGenerateModal()">
-                            <div class="icon">✨</div>
-                            <div class="label">AI Variant</div>
-                        </div>
-                        <div class="quick-add-btn" onclick="downloadSingle()">
-                            <div class="icon">💾</div>
-                            <div class="label">Download</div>
-                        </div>
+                    <div class="section-title">⚡ Quick Actions</div>
+                    <div class="btn-grid">
+                        <div class="btn" onclick="addText()">📝 Text</div>
+                        <div class="btn" onclick="document.getElementById('img-upload').click()">🖼️ Image</div>
+                        <div class="btn btn-ai" onclick="openCanvasModal()">🎨 Canvas AI</div>
+                        <div class="btn" onclick="downloadPoster()">💾 Download</div>
                     </div>
-                    <input type="file" id="image-upload" accept="image/*" style="display:none" onchange="handleImageUpload(event)">
-                    <input type="file" id="bg-upload" accept="image/*" style="display:none" onchange="handleBackgroundUpload(event)">
+                    <input type="file" id="img-upload" accept="image/*" style="display:none" onchange="handleImageUpload(event)">
                 </div>
-
-                <!-- Canvas Settings -->
+                
                 <div class="section">
-                    <div class="section-title">📐 Canvas Settings</div>
+                    <div class="section-title">📐 Canvas Size</div>
                     <div class="form-group">
                         <label>Width (px)</label>
-                        <input type="number" id="canvas-width" value="800" min="100">
+                        <input type="number" id="canvas-width" value="1024" min="512" max="1536" step="8">
                     </div>
                     <div class="form-group">
                         <label>Height (px)</label>
-                        <input type="number" id="canvas-height" value="1000" min="100">
+                        <input type="number" id="canvas-height" value="1024" min="512" max="1536" step="8">
                     </div>
-                    <div class="form-group">
-                        <label>Background Color</label>
-                        <input type="color" id="canvas-bg-color" value="#ffffff" onchange="updateCanvasBackground()">
+                    <button class="btn" style="width:100%" onclick="updateCanvasSize()">Apply Size</button>
+                    <div class="info-box">
+                        <strong>Note:</strong> Dimensions must be divisible by 8 for Canvas Mode
                     </div>
-                    <button class="btn btn-primary" onclick="updateCanvasSize()">Apply Size</button>
                 </div>
-
-                <!-- Leonardo AI Settings -->
-                <div class="section" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05)); border: 2px solid #667eea;">
-                    <div class="section-title" style="color: #667eea;">✨ Leonardo AI Settings</div>
+                
+                <div class="section" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1)); border: 2px solid #667eea;">
+                    <div class="section-title" style="color: #667eea;">🔑 Leonardo API</div>
                     <div class="form-group">
-                        <label>Leonardo API Key</label>
-                        <input type="password" id="leonardo-api-key" placeholder="Enter your Leonardo AI API key">
+                        <label>API Key</label>
+                        <input type="password" id="api-key" placeholder="Enter Leonardo API key">
                     </div>
-                    <div class="ai-info-box">
-                        <strong>🔑 Get your API key:</strong>
-                        1. Go to <a href="https://app.leonardo.ai" target="_blank" style="color: #667eea;">app.leonardo.ai</a><br>
-                        2. Click profile → User Settings<br>
-                        3. Find "API Access" section<br>
-                        4. Copy your API key
+                    <div class="info-box">
+                        Get your API key from:<br>
+                        <a href="https://app.leonardo.ai" target="_blank" style="color: #667eea;">app.leonardo.ai</a> → Settings → API Access
                     </div>
                 </div>
             </div>
-
+            
             <!-- Workspace -->
             <div class="workspace">
-                <div class="tabs">
-                    <button class="tab active" onclick="switchTab('design')">🎨 Design</button>
-                    <button class="tab" onclick="switchTab('bulk')">📦 Bulk Export (<span id="template-count">0</span>)</button>
-                </div>
-
-                <!-- Design Tab -->
-                <div id="design-tab" class="tab-content active">
-                    <div class="canvas-container">
-                        <canvas id="canvas"></canvas>
-                    </div>
-                </div>
-
-                <!-- Bulk Export Tab -->
-                <div id="bulk-tab-content" class="tab-content">
-                    <div id="bulk-content"></div>
+                <div class="canvas-container">
+                    <canvas id="canvas"></canvas>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Floating Toolbar -->
-    <div id="floating-toolbar" class="floating-toolbar"></div>
-
-    <!-- Loading Overlay -->
+    
+    <!-- Loading -->
     <div id="loading" class="loading">
         <div class="loading-content">
             <div class="spinner"></div>
             <div id="loading-text">Processing...</div>
         </div>
     </div>
-
+    
     <!-- Notification -->
     <div id="notification" class="notification"></div>
-
+    
     <script>
-        console.log('🚀 BatchPoster Pro v2.0 FINAL - Image-to-Image Mode');
+        console.log('🎨 BatchPoster Pro - Canvas Mode VERIFIED');
         
-        // Global variables
         let canvas;
-        let templateFields = [];
-        let bulkData = [{}];
-        let textLayersBackup = [];
-        let backgroundImageDimensions = null;
-        let aiGenerationMode = 'reference';
-
-        // Initialize
+        
         window.onload = function() {
             initCanvas();
-            initParticles();
-            loadSavedAPIKey();
-            renderBulkExportInterface();
+            loadAPIKey();
         };
-
+        
         function initCanvas() {
             canvas = new fabric.Canvas('canvas', {
-                width: 800,
-                height: 1000,
+                width: 1024,
+                height: 1024,
                 backgroundColor: '#ffffff'
             });
-
-            canvas.on('selection:created', handleSelection);
-            canvas.on('selection:updated', handleSelection);
-            canvas.on('selection:cleared', hideFloatingToolbar);
         }
-
+        
         function updateCanvasSize() {
-            const width = parseInt(document.getElementById('canvas-width').value);
-            const height = parseInt(document.getElementById('canvas-height').value);
+            let width = parseInt(document.getElementById('canvas-width').value);
+            let height = parseInt(document.getElementById('canvas-height').value);
+            
+            // Ensure divisible by 8
+            width = Math.round(width / 8) * 8;
+            height = Math.round(height / 8) * 8;
+            
+            document.getElementById('canvas-width').value = width;
+            document.getElementById('canvas-height').value = height;
+            
             canvas.setDimensions({ width, height });
             canvas.renderAll();
-            showNotification('✅ Canvas size updated!');
+            showNotification('✅ Canvas size updated: ' + width + 'x' + height);
         }
-
-        function updateCanvasBackground() {
-            const color = document.getElementById('canvas-bg-color').value;
-            canvas.setBackgroundColor(color, canvas.renderAll.bind(canvas));
-            showNotification('✅ Background color updated!');
-        }
-
+        
         function addText() {
             const text = new fabric.IText('Double-click to edit', {
                 left: 100,
                 top: 100,
-                fontSize: 24,
+                fontSize: 32,
                 fontFamily: 'Arial',
                 fill: '#000000'
             });
@@ -657,33 +363,17 @@
             canvas.setActiveObject(text);
             canvas.renderAll();
         }
-
-        function addShape() {
-            const rect = new fabric.Rect({
-                left: 100,
-                top: 100,
-                width: 200,
-                height: 100,
-                fill: '#667eea',
-                stroke: '#000000',
-                strokeWidth: 0
-            });
-            canvas.add(rect);
-            canvas.setActiveObject(rect);
-            canvas.renderAll();
-        }
-
+        
         function handleImageUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
-
+            
             const reader = new FileReader();
             reader.onload = function(e) {
                 fabric.Image.fromURL(e.target.result, function(img) {
-                    img.scaleToWidth(Math.min(400, canvas.width - 100));
+                    img.scaleToWidth(Math.min(500, canvas.width - 100));
                     img.set({ left: 50, top: 50 });
                     canvas.add(img);
-                    canvas.setActiveObject(img);
                     canvas.renderAll();
                     showNotification('✅ Image added!');
                 });
@@ -691,494 +381,244 @@
             reader.readAsDataURL(file);
             event.target.value = '';
         }
-
-        function handleBackgroundUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                fabric.Image.fromURL(e.target.result, function(img) {
-                    img.scaleToWidth(canvas.width);
-                    img.scaleToHeight(canvas.height);
-                    canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas));
-                    showNotification('✅ Background image set!');
-                });
-            };
-            reader.readAsDataURL(file);
-            event.target.value = '';
-        }
-
-        function handleSelection(e) {
-            const obj = e.selected ? e.selected[0] : e.target;
-            if (obj) {
-                showFloatingToolbar(obj);
+        
+        function loadAPIKey() {
+            const saved = localStorage.getItem('leonardo_api_key');
+            if (saved) {
+                document.getElementById('api-key').value = saved;
             }
-        }
-
-        function showFloatingToolbar(obj) {
-            if (!obj) return;
             
-            const toolbar = document.getElementById('floating-toolbar');
-            let html = `
-                <button class="toolbar-btn" onclick="deleteSelected()" title="Delete">🗑️</button>
-                <button class="toolbar-btn" onclick="duplicateSelected()" title="Duplicate">📋</button>
-            `;
-
-            if (obj.type === 'i-text' || obj.type === 'text' || obj.type === 'image') {
-                html += `<button class="toolbar-btn" onclick="makeTemplate()" title="Make Template">✨</button>`;
-            }
-
-            toolbar.innerHTML = html;
-            toolbar.classList.add('active');
-        }
-
-        function hideFloatingToolbar() {
-            document.getElementById('floating-toolbar').classList.remove('active');
-        }
-
-        function deleteSelected() {
-            const activeObject = canvas.getActiveObject();
-            if (activeObject) {
-                canvas.remove(activeObject);
-                canvas.renderAll();
-                hideFloatingToolbar();
-                showNotification('✅ Deleted!');
-            }
-        }
-
-        function duplicateSelected() {
-            const activeObject = canvas.getActiveObject();
-            if (activeObject) {
-                activeObject.clone(function(cloned) {
-                    cloned.set({
-                        left: cloned.left + 20,
-                        top: cloned.top + 20
-                    });
-                    canvas.add(cloned);
-                    canvas.setActiveObject(cloned);
-                    canvas.renderAll();
-                    showNotification('✅ Duplicated!');
-                });
-            }
-        }
-
-        function makeTemplate() {
-            const obj = canvas.getActiveObject();
-            if (!obj) return;
-
-            const fieldName = prompt('Enter template field name (e.g., "Title", "Price", "Product Image"):');
-            if (!fieldName) return;
-
-            obj.set({
-                templateField: fieldName,
-                templateType: obj.type === 'image' ? 'image' : 'text',
-                stroke: '#667eea',
-                strokeWidth: 2
-            });
-
-            templateFields.push({
-                name: fieldName,
-                type: obj.type === 'image' ? 'image' : 'text',
-                object: obj
-            });
-
-            updateTemplateCount();
-            canvas.renderAll();
-            showNotification(`✨ Template field "${fieldName}" created!`);
-        }
-
-        function updateTemplateCount() {
-            document.getElementById('template-count').textContent = templateFields.length;
-        }
-
-        // Leonardo AI Functions
-        function loadSavedAPIKey() {
-            const savedKey = localStorage.getItem('leonardo_api_key');
-            if (savedKey) {
-                document.getElementById('leonardo-api-key').value = savedKey;
-            }
-
-            document.getElementById('leonardo-api-key').addEventListener('change', function() {
+            document.getElementById('api-key').addEventListener('change', function() {
                 localStorage.setItem('leonardo_api_key', this.value);
             });
         }
-
-        function openAIGenerateModal() {
-            const modalHTML = `
-                <div class="modal active" id="ai-modal">
-                    <div class="modal-content" style="max-width: 750px;">
-                        <h2>✨ Generate AI Variant</h2>
-                        <p style="color: #666; margin-bottom: 20px;">Choose generation mode and create poster variants</p>
+        
+        function openCanvasModal() {
+            const modal = `
+                <div class="modal active" id="canvas-modal">
+                    <div class="modal-content">
+                        <h2>🎨 Leonardo Canvas Mode (Inpainting)</h2>
+                        <p style="color: #666; margin-bottom: 20px;">Change specific areas of your poster while keeping everything else intact</p>
                         
-                        <!-- Mode Selection -->
                         <div class="form-group">
-                            <label>Generation Mode</label>
-                            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;">
-                                <button class="mode-btn active" id="mode-reference" onclick="setAIMode(event, 'reference')">
-                                    🎯 With Reference
-                                </button>
-                                <button class="mode-btn" id="mode-generate" onclick="setAIMode(event, 'generate')">
-                                    ✨ From Scratch
-                                </button>
-                                <button class="mode-btn" id="mode-enhance" onclick="setAIMode(event, 'enhance')">
-                                    🎨 Enhance
-                                </button>
+                            <label>What to Change</label>
+                            <textarea id="mask-prompt" style="width:100%; min-height:100px;" placeholder="Example: red Toyota Corolla, front view, studio lighting">blue Honda Civic, professional studio photo, front three-quarter view, clean background</textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Mask Area (Where to Apply Changes)</label>
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                                <input type="number" id="mask-x" placeholder="X" value="200">
+                                <input type="number" id="mask-y" placeholder="Y" value="300">
+                                <input type="number" id="mask-width" placeholder="Width" value="600">
+                                <input type="number" id="mask-height" placeholder="Height" value="400">
                             </div>
-                            <p id="mode-desc" style="font-size: 11px; color: #666;">
-                                Uses your poster as reference with image-to-image (70% strength)
+                            <div class="info-box" style="margin-top: 10px;">
+                                <strong>Coordinates:</strong> X, Y = top-left corner position<br>
+                                Width, Height = size of area to change
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Inpaint Strength: <span id="inpaint-val">85%</span></label>
+                            <input type="range" id="inpaint-strength" min="50" max="95" value="85" 
+                                   oninput="document.getElementById('inpaint-val').textContent = this.value + '%'" 
+                                   style="width: 100%;">
+                            <p style="font-size: 11px; color: #666; margin-top: 5px;">
+                                Higher = more change, Lower = closer to original
                             </p>
                         </div>
                         
-                        <!-- Prompt -->
-                        <div class="form-group">
-                            <label>AI Prompt</label>
-                            <textarea id="ai-prompt" style="width:100%; min-height:180px; font-size: 13px; line-height: 1.5;">Professional car rental advertisement poster, clean corporate design.
-
-Brand: TOLOTO Rental Services
-Headline: "Long & Short Terms!"
-
-Vehicle: White Kia Picanto, studio lighting, front view.
-Background: beige textured paper, subtle grain, premium feel.
-Colors: mustard yellow, white, dark blue.
-
-Text:
-• 24/7 Assistance
-• Pick-Up Location
-• Premium Insurance
-• Unlimited Mileage
-
-CTA: "Book Now!"
-Website: www.tolotorental.com
-Phone: +230 52587147
-
-Style: professional, high quality, sharp typography.</textarea>
+                        <div class="warning-box">
+                            <strong>⚠️ Important:</strong><br>
+                            • Canvas must have content (not empty)<br>
+                            • Dimensions must be divisible by 8<br>
+                            • Max size: 1536x1536<br>
+                            • Generation takes 30-90 seconds
                         </div>
                         
-                        <!-- Reference Strength -->
-                        <div class="form-group" id="reference-strength-group">
-                            <label>Reference Strength</label>
-                            <select id="reference-strength" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
-                                <option value="0.5">Light (50%) - More creative freedom</option>
-                                <option value="0.7" selected>Medium (70%) - Balanced (recommended)</option>
-                                <option value="0.85">Strong (85%) - Very close to original</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Enhancement Strength -->
-                        <div class="form-group" id="enhance-strength-group" style="display: none;">
-                            <label>Enhancement: <span id="str-val">15%</span></label>
-                            <input type="range" id="ai-strength" min="0" max="100" value="15" 
-                                   oninput="document.getElementById('str-val').textContent = this.value + '%'" 
-                                   style="width: 100%;">
-                            <p style="font-size: 11px; color: #666; margin-top: 5px;">10-20% = subtle enhancement only</p>
-                        </div>
-                        
-                        <div class="ai-info-box">
-                            <strong id="info-title">🎯 With Reference Mode:</strong>
-                            <span id="info-text">Uses image-to-image with your poster as reference. Strength controls how much it changes.</span>
-                        </div>
-                        
-                        <div class="btn-group">
-                            <button class="btn btn-ai" onclick="generateAIVariant()">✨ Generate AI Variant</button>
-                            <button class="btn btn-secondary" onclick="closeAIModal()">❌ Cancel</button>
+                        <div style="display: flex; gap: 10px; margin-top: 20px;">
+                            <button class="btn btn-ai" style="flex: 1; padding: 15px;" onclick="generateCanvasInpaint()">
+                                🎨 Generate with Canvas Mode
+                            </button>
+                            <button class="btn" style="flex: 0.3; padding: 15px;" onclick="closeModal()">
+                                ❌ Cancel
+                            </button>
                         </div>
                     </div>
                 </div>
             `;
-            
-            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            document.body.insertAdjacentHTML('beforeend', modal);
         }
-
-        function setAIMode(event, mode) {
-            aiGenerationMode = mode;
-            
-            const refBtn = document.getElementById('mode-reference');
-            const genBtn = document.getElementById('mode-generate');
-            const enhBtn = document.getElementById('mode-enhance');
-            const modeDesc = document.getElementById('mode-desc');
-            const refStrength = document.getElementById('reference-strength-group');
-            const enhStrength = document.getElementById('enhance-strength-group');
-            const infoTitle = document.getElementById('info-title');
-            const infoText = document.getElementById('info-text');
-            
-            // Reset all buttons
-            [refBtn, genBtn, enhBtn].forEach(btn => {
-                if (btn) {
-                    btn.classList.remove('active');
-                }
-            });
-            
-            if (mode === 'reference') {
-                if (refBtn) {
-                    refBtn.classList.add('active');
-                    modeDesc.textContent = 'Uses your poster as reference with image-to-image (70% strength)';
-                    refStrength.style.display = 'block';
-                    enhStrength.style.display = 'none';
-                    infoTitle.textContent = '🎯 With Reference Mode:';
-                    infoText.textContent = 'Uses image-to-image with your poster as reference. Strength controls how much it changes.';
-                }
-            } else if (mode === 'generate') {
-                if (genBtn) {
-                    genBtn.classList.add('active');
-                    modeDesc.textContent = 'Generates entirely from prompt (no reference image)';
-                    refStrength.style.display = 'none';
-                    enhStrength.style.display = 'none';
-                    infoTitle.textContent = '✨ Generate Mode:';
-                    infoText.textContent = 'Creates a completely new poster based on your detailed prompt!';
-                }
-            } else {
-                if (enhBtn) {
-                    enhBtn.classList.add('active');
-                    modeDesc.textContent = 'Subtle enhancement (15% strength recommended)';
-                    refStrength.style.display = 'none';
-                    enhStrength.style.display = 'block';
-                    infoTitle.textContent = '🎨 Enhance Mode:';
-                    infoText.textContent = 'Makes subtle improvements with low transformation strength!';
-                }
-            }
-        }
-
-        function closeAIModal() {
-            const modal = document.getElementById('ai-modal');
+        
+        function closeModal() {
+            const modal = document.getElementById('canvas-modal');
             if (modal) modal.remove();
         }
-
-        async function generateAIVariant() {
-            const apiKey = document.getElementById('leonardo-api-key').value.trim();
-            const promptEl = document.getElementById('ai-prompt');
-            const prompt = promptEl ? promptEl.value.trim() : '';
-            const mode = aiGenerationMode;
+        
+        async function generateCanvasInpaint() {
+            const apiKey = document.getElementById('api-key').value.trim();
+            const prompt = document.getElementById('mask-prompt').value.trim();
+            const maskX = parseInt(document.getElementById('mask-x').value);
+            const maskY = parseInt(document.getElementById('mask-y').value);
+            const maskWidth = parseInt(document.getElementById('mask-width').value);
+            const maskHeight = parseInt(document.getElementById('mask-height').value);
+            const inpaintStrength = parseInt(document.getElementById('inpaint-strength').value);
             
             if (!apiKey) {
-                alert('⚠️ Please enter your Leonardo AI API key in the sidebar settings.');
+                alert('⚠️ Please enter Leonardo API key');
                 return;
             }
             
             if (!prompt) {
-                alert('⚠️ Please enter a prompt.');
+                alert('⚠️ Please enter what you want to generate');
                 return;
             }
             
-            console.log('🎯 Mode:', mode, 'Prompt:', prompt.substring(0, 50) + '...');
-            
-            closeAIModal();
-            showLoading(mode === 'enhance' ? 'Enhancing poster...' : mode === 'generate' ? 'Generating from prompt...' : 'Generating with reference...');
+            closeModal();
+            showLoading('Preparing images...');
             
             try {
-                // Backup text layers
-                textLayersBackup = [];
-                canvas.getObjects().forEach(obj => {
-                    if (obj.type === 'i-text' || obj.type === 'text') {
-                        textLayersBackup.push({
-                            text: obj.text,
-                            left: obj.left,
-                            top: obj.top,
-                            fontSize: obj.fontSize,
-                            fontFamily: obj.fontFamily,
-                            fill: obj.fill,
-                            fontWeight: obj.fontWeight,
-                            fontStyle: obj.fontStyle,
-                            textAlign: obj.textAlign,
-                            opacity: obj.opacity,
-                            angle: obj.angle,
-                            scaleX: obj.scaleX,
-                            scaleY: obj.scaleY,
-                            shadow: obj.shadow,
-                            stroke: obj.stroke,
-                            strokeWidth: obj.strokeWidth
-                        });
-                    }
+                // Step 1: Export canvas as base image
+                const baseDataURL = canvas.toDataURL({ format: 'png', quality: 1 });
+                
+                // Step 2: Create mask (white on area to change, black elsewhere)
+                const maskDataURL = createMask(canvas.width, canvas.height, maskX, maskY, maskWidth, maskHeight);
+                
+                // Step 3: Upload base image
+                updateLoadingText('Uploading base image...');
+                const baseImageId = await uploadImage(baseDataURL, apiKey);
+                console.log('✅ Base image ID:', baseImageId);
+                
+                // Step 4: Upload mask image
+                updateLoadingText('Uploading mask...');
+                const maskImageId = await uploadImage(maskDataURL, apiKey);
+                console.log('✅ Mask image ID:', maskImageId);
+                
+                // Step 5: Generate with Canvas Mode
+                updateLoadingText('Generating with Canvas Mode (30-90s)...');
+                
+                // Convert inpaint strength to init_strength (inverted!)
+                const initStrength = 1 - (inpaintStrength / 100);
+                console.log('🎨 Inpaint Strength:', inpaintStrength + '% → init_strength:', initStrength);
+                
+                const genResponse = await fetch('https://cloud.leonardo.ai/api/rest/v1/generations', {
+                    method: 'POST',
+                    headers: {
+                        'authorization': `Bearer ${apiKey}`,
+                        'content-type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        canvasRequest: true,  // REQUIRED for Canvas Mode
+                        canvasRequestType: "INPAINT",
+                        canvasInitId: baseImageId,
+                        canvasMaskId: maskImageId,
+                        init_strength: initStrength,
+                        num_images: 1,
+                        guidance_scale: 7,
+                        modelId: "1e60896f-3c26-4296-8ecc-53e2afecc132"  // Leonardo Diffusion XL
+                        // NOTE: alchemy, photoReal, promptMagic NOT compatible with Canvas Mode
+                    })
                 });
                 
-                let aiImageUrl;
-                
-                if (mode === 'generate') {
-                    // From Scratch - text-to-image
-                    aiImageUrl = await generateLeonardoTextToImage(apiKey, prompt);
-                    
-                } else {
-                    // Both 'reference' and 'enhance' use image-to-image
-                    const textObjs = canvas.getObjects().filter(o => o.type === 'i-text' || o.type === 'text');
-                    textObjs.forEach(o => canvas.remove(o));
-                    canvas.renderAll();
-                    
-                    let strength;
-                    if (mode === 'reference') {
-                        const strengthEl = document.getElementById('reference-strength');
-                        strength = strengthEl ? parseFloat(strengthEl.value) : 0.7;
-                    } else {
-                        const strengthEl = document.getElementById('ai-strength');
-                        strength = strengthEl ? parseInt(strengthEl.value) / 100 : 0.15;
-                    }
-                    
-                    const dataURL = canvas.toDataURL({ format: 'png', quality: 1 });
-                    aiImageUrl = await generateLeonardoImageToImage(dataURL, apiKey, prompt, strength);
+                if (!genResponse.ok) {
+                    const errorText = await genResponse.text();
+                    throw new Error(`Generation failed: ${genResponse.status} - ${errorText}`);
                 }
                 
-                console.log('✅ AI image received:', aiImageUrl);
+                const genData = await genResponse.json();
+                const generationId = genData.sdGenerationJob?.generationId;
                 
-                // Load result
-                updateLoadingText('Loading AI image...');
+                console.log('✅ Generation ID:', generationId);
                 
-                fabric.Image.fromURL(aiImageUrl, function(aiImg) {
-                    const zoom = canvas.getZoom();
-                    aiImg.scaleToWidth(canvas.width / zoom);
-                    aiImg.scaleToHeight(canvas.height / zoom);
-                    aiImg.selectable = false;
-                    canvas.setBackgroundImage(aiImg, canvas.renderAll.bind(canvas));
+                // Step 6: Poll for result
+                updateLoadingText('Generating (check console for progress)...');
+                const resultUrl = await pollForResult(generationId, apiKey);
+                
+                // Step 7: Load result
+                updateLoadingText('Loading result...');
+                fabric.Image.fromURL(resultUrl, function(img) {
+                    img.scaleToWidth(canvas.width);
+                    img.scaleToHeight(canvas.height);
+                    canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas));
                     
-                    // Remove all objects
-                    canvas.getObjects().forEach(obj => canvas.remove(obj));
-                    
-                    // Restore text
-                    updateLoadingText('Restoring editable text...');
-                    textLayersBackup.forEach(data => {
-                        const text = new fabric.IText(data.text, data);
-                        canvas.add(text);
-                    });
-                    
-                    canvas.renderAll();
                     hideLoading();
-                    showNotification('✨ AI variant generated! Text is fully editable!');
-                    
+                    showNotification('✅ Canvas inpaint complete!');
                 }, { crossOrigin: 'anonymous' });
                 
             } catch (error) {
                 hideLoading();
-                console.error('❌ Full error:', error);
-                alert('AI generation failed: ' + error.message + '\n\nCheck console (F12) for details.');
+                console.error('❌ Error:', error);
+                alert('Failed: ' + error.message);
             }
         }
-
-        // Leonardo AI API Functions
-        async function generateLeonardoImageToImage(imageDataURL, apiKey, promptText, strength) {
-            console.log('🎨 Image-to-Image - Strength:', strength);
+        
+        function createMask(width, height, x, y, w, h) {
+            const maskCanvas = document.createElement('canvas');
+            maskCanvas.width = width;
+            maskCanvas.height = height;
+            const ctx = maskCanvas.getContext('2d');
             
-            try {
-                const response = await fetch(imageDataURL);
-                const blob = await response.blob();
-                
-                // Upload image
-                console.log('📤 Uploading image...');
-                const uploadRequest = await fetch('https://cloud.leonardo.ai/api/rest/v1/init-image', {
-                    method: 'POST',
-                    headers: {
-                        'authorization': `Bearer ${apiKey}`,
-                        'content-type': 'application/json'
-                    },
-                    body: JSON.stringify({ extension: 'png' })
-                });
-                
-                if (!uploadRequest.ok) {
-                    throw new Error('Upload request failed: ' + uploadRequest.status);
-                }
-                
-                const uploadData = await uploadRequest.json();
-                const { url: uploadUrl, fields, id: imageId } = uploadData.uploadInitImage;
-                
-                console.log('✅ Image ID:', imageId);
-                
-                // Upload to S3
-                const formData = new FormData();
-                const fieldsObj = typeof fields === 'string' ? JSON.parse(fields) : fields;
-                Object.keys(fieldsObj).forEach(key => formData.append(key, fieldsObj[key]));
-                formData.append('file', blob);
-                
-                await new Promise((resolve) => {
-                    const xhr = new XMLHttpRequest();
-                    xhr.open('POST', uploadUrl);
-                    xhr.onload = () => {
-                        console.log('✅ S3 upload status:', xhr.status);
-                        resolve();
-                    };
-                    xhr.onerror = () => {
-                        console.log('⚠️ S3 XHR error (upload likely succeeded)');
-                        resolve();
-                    };
-                    xhr.send(formData);
-                });
-                
-                console.log('⏳ Waiting 10 seconds for processing...');
-                await new Promise(r => setTimeout(r, 10000));
-                
-                // Generate with image-to-image
-                console.log('🎨 Generating (strength:', strength, ')...');
-                const genResponse = await fetch('https://cloud.leonardo.ai/api/rest/v1/generations', {
-                    method: 'POST',
-                    headers: {
-                        'authorization': `Bearer ${apiKey}`,
-                        'content-type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        height: 1024,
-                        width: 1024,
-                        modelId: "aa77f04e-3eec-4034-9c07-d0f619684628",
-                        prompt: promptText,
-                        init_image_id: imageId,
-                        init_strength: strength,
-                        guidance_scale: 7,
-                        num_inference_steps: 50,
-                        public: false
-                    })
-                });
-                
-                if (!genResponse.ok) {
-                    const errorText = await genResponse.text();
-                    console.error('❌ Generation error:', errorText);
-                    throw new Error(`Generation failed: ${genResponse.status} - ${errorText}`);
-                }
-                
-                const genData = await genResponse.json();
-                const generationId = genData.sdGenerationJob?.generationId;
-                
-                return await pollForResult(generationId, apiKey);
-                
-            } catch (error) {
-                console.error('❌ Image-to-Image error:', error);
-                throw error;
-            }
-        }
-
-        async function generateLeonardoTextToImage(apiKey, promptText) {
-            console.log('✨ Text-to-Image Generation');
+            // Fill with black (keep everything)
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, width, height);
             
-            try {
-                const genResponse = await fetch('https://cloud.leonardo.ai/api/rest/v1/generations', {
-                    method: 'POST',
-                    headers: {
-                        'authorization': `Bearer ${apiKey}`,
-                        'content-type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        height: 1024,
-                        width: 1024,
-                        modelId: "aa77f04e-3eec-4034-9c07-d0f619684628",
-                        prompt: promptText,
-                        num_images: 1,
-                        guidance_scale: 7,
-                        num_inference_steps: 50,
-                        public: false
-                    })
-                });
-                
-                if (!genResponse.ok) {
-                    const errorText = await genResponse.text();
-                    console.error('❌ Generation error:', errorText);
-                    throw new Error(`Generation failed: ${genResponse.status} - ${errorText}`);
-                }
-                
-                const genData = await genResponse.json();
-                const generationId = genData.sdGenerationJob?.generationId;
-                
-                return await pollForResult(generationId, apiKey);
-                
-            } catch (error) {
-                console.error('❌ Text-to-Image error:', error);
-                throw error;
-            }
+            // Draw white rectangle (change this area)
+            ctx.fillStyle = 'white';
+            ctx.fillRect(x, y, w, h);
+            
+            return maskCanvas.toDataURL('image/png');
         }
-
+        
+        async function uploadImage(dataURL, apiKey) {
+            // Request upload URL
+            const uploadRequest = await fetch('https://cloud.leonardo.ai/api/rest/v1/init-image', {
+                method: 'POST',
+                headers: {
+                    'authorization': `Bearer ${apiKey}`,
+                    'content-type': 'application/json'
+                },
+                body: JSON.stringify({ extension: 'png' })
+            });
+            
+            if (!uploadRequest.ok) {
+                throw new Error('Upload request failed: ' + uploadRequest.status);
+            }
+            
+            const uploadData = await uploadRequest.json();
+            const { url: uploadUrl, fields, id: imageId } = uploadData.uploadInitImage;
+            
+            // Convert dataURL to blob
+            const response = await fetch(dataURL);
+            const blob = await response.blob();
+            
+            // Upload to S3
+            const formData = new FormData();
+            const fieldsObj = typeof fields === 'string' ? JSON.parse(fields) : fields;
+            Object.keys(fieldsObj).forEach(key => formData.append(key, fieldsObj[key]));
+            formData.append('file', blob);
+            
+            await new Promise((resolve) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', uploadUrl);
+                xhr.onload = () => {
+                    console.log('✅ S3 upload status:', xhr.status);
+                    resolve();
+                };
+                xhr.onerror = () => {
+                    console.log('⚠️ S3 XHR error (likely succeeded)');
+                    resolve();
+                };
+                xhr.send(formData);
+            });
+            
+            // Wait for processing
+            await new Promise(r => setTimeout(r, 10000));
+            
+            return imageId;
+        }
+        
         async function pollForResult(generationId, apiKey) {
             console.log('⏳ Polling for result...');
             
@@ -1213,21 +653,29 @@ Style: professional, high quality, sharp typography.</textarea>
             
             throw new Error('Timeout after 3 minutes');
         }
-
-        // Utility Functions
+        
+        function downloadPoster() {
+            const dataURL = canvas.toDataURL({ format: 'png', quality: 1 });
+            const link = document.createElement('a');
+            link.download = 'poster_' + Date.now() + '.png';
+            link.href = dataURL;
+            link.click();
+            showNotification('✅ Downloaded!');
+        }
+        
         function showLoading(text) {
             document.getElementById('loading').classList.add('active');
             document.getElementById('loading-text').textContent = text;
         }
-
+        
         function updateLoadingText(text) {
             document.getElementById('loading-text').textContent = text;
         }
-
+        
         function hideLoading() {
             document.getElementById('loading').classList.remove('active');
         }
-
+        
         function showNotification(text) {
             const notif = document.getElementById('notification');
             notif.textContent = text;
@@ -1236,89 +684,6 @@ Style: professional, high quality, sharp typography.</textarea>
                 notif.style.display = 'none';
             }, 3000);
         }
-
-        function downloadSingle() {
-            const dataURL = canvas.toDataURL({
-                format: 'png',
-                quality: 1
-            });
-            
-            const link = document.createElement('a');
-            link.download = 'poster_' + Date.now() + '.png';
-            link.href = dataURL;
-            link.click();
-            
-            showNotification('✅ Poster downloaded!');
-        }
-
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-
-            if (tabName === 'design') {
-                document.querySelector('.tab[onclick*="design"]').classList.add('active');
-                document.getElementById('design-tab').classList.add('active');
-            } else if (tabName === 'bulk') {
-                document.querySelector('.tab[onclick*="bulk"]').classList.add('active');
-                document.getElementById('bulk-tab-content').classList.add('active');
-                renderBulkExportInterface();
-            }
-        }
-
-        function renderBulkExportInterface() {
-            const bulkContent = document.getElementById('bulk-content');
-            
-            if (templateFields.length === 0) {
-                bulkContent.innerHTML = `
-                    <div style="text-align: center; padding: 60px 20px; color: #666;">
-                        <div style="font-size: 48px; margin-bottom: 20px;">📋</div>
-                        <h3 style="margin-bottom: 10px;">No template fields yet</h3>
-                        <p>Go to the Design tab and click ✨ Template button on text or images to create template fields</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            bulkContent.innerHTML = `
-                <div style="margin-bottom: 20px;">
-                    <h3>Bulk Export</h3>
-                    <p style="color: #666;">Template fields: ${templateFields.map(f => f.name).join(', ')}</p>
-                    <button class="btn btn-success" onclick="alert('Bulk export feature - upload CSV and generate batch!')" style="margin-top: 15px;">
-                        📦 Generate Batch
-                    </button>
-                </div>
-            `;
-        }
-
-        function initParticles() {
-            particlesJS('particles-js', {
-                particles: {
-                    number: { value: 40 },
-                    color: { value: '#ffffff' },
-                    shape: { type: 'circle' },
-                    opacity: { value: 0.3 },
-                    size: { value: 3 },
-                    line_linked: {
-                        enable: true,
-                        distance: 150,
-                        color: '#ffffff',
-                        opacity: 0.2,
-                        width: 1
-                    },
-                    move: { enable: true, speed: 1 }
-                }
-            });
-        }
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Delete' || e.key === 'Backspace') {
-                const activeObject = canvas.getActiveObject();
-                if (activeObject && !activeObject.isEditing) {
-                    deleteSelected();
-                }
-            }
-        });
     </script>
 </body>
 </html>
