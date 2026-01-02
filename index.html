@@ -3188,27 +3188,26 @@
          
          const modalHTML = `
          <div class="modal active" id="ai-modal">
-             <div class="modal-content">
-                 <h2>✨ Generate AI Variant</h2>
-                 <p>Transform your poster with AI</p>
-                 
-                 <div class="form-group">
-                     <label>Style Prompt</label>
-                     <textarea id="ai-prompt" style="width:100%; min-height:100px;">professional poster design, vibrant colors, artistic style</textarea>
-                 </div>
-                 
-                 <div class="form-group">
-                     <label>Strength: <span id="str-val">50%</span></label>
-                     <input type="range" id="ai-strength" min="0" max="100" value="50" 
-                            oninput="document.getElementById('str-val').textContent = this.value + '%'">
-                 </div>
-                 
-                 <div class="btn-group">
-                     <button class="btn btn-ai" onclick="generateAIVariant()">✨ Generate</button>
-                     <button class="btn btn-secondary" onclick="closeAIModal()">Cancel</button>
-                 </div>
-             </div>
-         </div>
+    <div class="modal-content">
+        <h2>✨ Generate AI Variant</h2>
+        
+        <div class="form-group">
+            <label>Style Prompt</label>
+            <textarea id="ai-prompt" style="width:100%; min-height:100px;">professional poster design, vibrant colors, artistic style</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label>Strength: <span id="str-val">60%</span></label>
+            <input type="range" id="ai-strength" min="0" max="100" value="60" 
+                   oninput="document.getElementById('str-val').textContent = this.value + '%'">
+        </div>
+        
+        <div class="btn-group">
+            <button class="btn btn-ai" onclick="generateAIVariant()">✨ Generate</button>
+            <button class="btn btn-secondary" onclick="closeAIModal()">Cancel</button>
+        </div>
+    </div>
+</div>
          `;
          document.body.insertAdjacentHTML('beforeend', modalHTML);
          }
