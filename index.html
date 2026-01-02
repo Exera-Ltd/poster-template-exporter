@@ -1086,12 +1086,19 @@ Style: professional, high quality, sharp typography.</textarea>
                 await new Promise((resolve) => {
                     const xhr = new XMLHttpRequest();
                     xhr.open('POST', uploadUrl);
-                    xhr.onload = xhr.onerror = () => resolve();
+                    xhr.onload = () => {
+                        console.log('✅ S3 upload status:', xhr.status);
+                        resolve();
+                    };
+                    xhr.onerror = () => {
+                        console.log('⚠️ S3 XHR error (upload likely succeeded, status:', xhr.status, ')');
+                        resolve();
+                    };
                     xhr.send(formData);
                 });
                 
-                console.log('⏳ Waiting 5 seconds...');
-                await new Promise(r => setTimeout(r, 5000));
+                console.log('⏳ Waiting 10 seconds for image processing...');
+                await new Promise(r => setTimeout(r, 10000));
                 
                 // Generate with ControlNet
                 console.log('🎨 Generating with image guidance...');
@@ -1124,7 +1131,9 @@ Style: professional, high quality, sharp typography.</textarea>
                 });
                 
                 if (!genResponse.ok) {
-                    throw new Error('Generation failed: ' + genResponse.status);
+                    const errorText = await genResponse.text();
+                    console.error('❌ Generation error response:', errorText);
+                    throw new Error(`Generation failed: ${genResponse.status} - ${errorText}`);
                 }
                 
                 const genData = await genResponse.json();
@@ -1209,11 +1218,19 @@ Style: professional, high quality, sharp typography.</textarea>
                 await new Promise((resolve) => {
                     const xhr = new XMLHttpRequest();
                     xhr.open('POST', uploadUrl);
-                    xhr.onload = xhr.onerror = () => resolve();
+                    xhr.onload = () => {
+                        console.log('✅ S3 upload status:', xhr.status);
+                        resolve();
+                    };
+                    xhr.onerror = () => {
+                        console.log('⚠️ S3 XHR error (upload likely succeeded)');
+                        resolve();
+                    };
                     xhr.send(formData);
                 });
                 
-                await new Promise(r => setTimeout(r, 5000));
+                console.log('⏳ Waiting 10 seconds for processing...');
+                await new Promise(r => setTimeout(r, 10000));
                 
                 const genResponse = await fetch('https://cloud.leonardo.ai/api/rest/v1/generations', {
                     method: 'POST',
