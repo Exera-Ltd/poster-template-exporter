@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BatchPoster Pro AI - by Exera</title>
+    <title>BatchPoster Pro AI v2.0 - FINAL</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -75,6 +75,19 @@
         @keyframes pulse {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.05); }
+        }
+
+        .version-tag {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: bold;
+            z-index: 5000;
         }
 
         .header p {
@@ -468,6 +481,7 @@
     </style>
 </head>
 <body>
+    <div class="version-tag">v2.0 FINAL - Image-to-Image</div>
     <div id="particles-js"></div>
 
     <div class="container">
@@ -573,9 +587,7 @@
     </div>
 
     <!-- Floating Toolbar -->
-    <div id="floating-toolbar" class="floating-toolbar">
-        <!-- Dynamic content -->
-    </div>
+    <div id="floating-toolbar" class="floating-toolbar"></div>
 
     <!-- Loading Overlay -->
     <div id="loading" class="loading">
@@ -589,6 +601,8 @@
     <div id="notification" class="notification"></div>
 
     <script>
+        console.log('🚀 BatchPoster Pro v2.0 FINAL - Image-to-Image Mode');
+        
         // Global variables
         let canvas;
         let templateFields = [];
@@ -711,11 +725,7 @@
                 <button class="toolbar-btn" onclick="duplicateSelected()" title="Duplicate">📋</button>
             `;
 
-            if (obj.type === 'i-text' || obj.type === 'text') {
-                html += `<button class="toolbar-btn" onclick="makeTemplate()" title="Make Template">✨</button>`;
-            }
-
-            if (obj.type === 'image') {
+            if (obj.type === 'i-text' || obj.type === 'text' || obj.type === 'image') {
                 html += `<button class="toolbar-btn" onclick="makeTemplate()" title="Make Template">✨</button>`;
             }
 
@@ -795,8 +805,6 @@
         }
 
         function openAIGenerateModal() {
-            const apiKey = document.getElementById('leonardo-api-key').value.trim();
-            
             const modalHTML = `
                 <div class="modal active" id="ai-modal">
                     <div class="modal-content" style="max-width: 750px;">
@@ -818,7 +826,7 @@
                                 </button>
                             </div>
                             <p id="mode-desc" style="font-size: 11px; color: #666;">
-                                Uses your poster as reference + detailed prompt (best results!)
+                                Uses your poster as reference with image-to-image (70% strength)
                             </p>
                         </div>
                         
@@ -853,7 +861,7 @@ Style: professional, high quality, sharp typography.</textarea>
                             <select id="reference-strength" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
                                 <option value="0.5">Light (50%) - More creative freedom</option>
                                 <option value="0.7" selected>Medium (70%) - Balanced (recommended)</option>
-                                <option value="0.85">Strong (85%) - Close to original</option>
+                                <option value="0.85">Strong (85%) - Very close to original</option>
                             </select>
                         </div>
                         
@@ -868,7 +876,7 @@ Style: professional, high quality, sharp typography.</textarea>
                         
                         <div class="ai-info-box">
                             <strong id="info-title">🎯 With Reference Mode:</strong>
-                            <span id="info-text">Uses your poster's layout as reference while following your detailed prompt for best results!</span>
+                            <span id="info-text">Uses image-to-image with your poster as reference. Strength controls how much it changes.</span>
                         </div>
                         
                         <div class="btn-group">
@@ -898,38 +906,36 @@ Style: professional, high quality, sharp typography.</textarea>
             [refBtn, genBtn, enhBtn].forEach(btn => {
                 if (btn) {
                     btn.classList.remove('active');
-                    btn.style.background = '#e0e0e0';
-                    btn.style.color = '#666';
                 }
             });
             
             if (mode === 'reference') {
-                refBtn.classList.add('active');
-                refBtn.style.background = '#667eea';
-                refBtn.style.color = 'white';
-                modeDesc.textContent = 'Uses your poster as reference + detailed prompt (best results!)';
-                refStrength.style.display = 'block';
-                enhStrength.style.display = 'none';
-                infoTitle.textContent = '🎯 With Reference Mode:';
-                infoText.textContent = 'Uses your poster layout as reference while following your prompt!';
+                if (refBtn) {
+                    refBtn.classList.add('active');
+                    modeDesc.textContent = 'Uses your poster as reference with image-to-image (70% strength)';
+                    refStrength.style.display = 'block';
+                    enhStrength.style.display = 'none';
+                    infoTitle.textContent = '🎯 With Reference Mode:';
+                    infoText.textContent = 'Uses image-to-image with your poster as reference. Strength controls how much it changes.';
+                }
             } else if (mode === 'generate') {
-                genBtn.classList.add('active');
-                genBtn.style.background = '#667eea';
-                genBtn.style.color = 'white';
-                modeDesc.textContent = 'Generates entirely from prompt (no reference image)';
-                refStrength.style.display = 'none';
-                enhStrength.style.display = 'none';
-                infoTitle.textContent = '✨ Generate Mode:';
-                infoText.textContent = 'Creates a completely new poster based on your detailed prompt!';
+                if (genBtn) {
+                    genBtn.classList.add('active');
+                    modeDesc.textContent = 'Generates entirely from prompt (no reference image)';
+                    refStrength.style.display = 'none';
+                    enhStrength.style.display = 'none';
+                    infoTitle.textContent = '✨ Generate Mode:';
+                    infoText.textContent = 'Creates a completely new poster based on your detailed prompt!';
+                }
             } else {
-                enhBtn.classList.add('active');
-                enhBtn.style.background = '#667eea';
-                enhBtn.style.color = 'white';
-                modeDesc.textContent = 'Subtle enhancement of your current poster';
-                refStrength.style.display = 'none';
-                enhStrength.style.display = 'block';
-                infoTitle.textContent = '🎨 Enhance Mode:';
-                infoText.textContent = 'Makes subtle improvements to your existing poster design!';
+                if (enhBtn) {
+                    enhBtn.classList.add('active');
+                    modeDesc.textContent = 'Subtle enhancement (15% strength recommended)';
+                    refStrength.style.display = 'none';
+                    enhStrength.style.display = 'block';
+                    infoTitle.textContent = '🎨 Enhance Mode:';
+                    infoText.textContent = 'Makes subtle improvements with low transformation strength!';
+                }
             }
         }
 
@@ -957,7 +963,7 @@ Style: professional, high quality, sharp typography.</textarea>
             console.log('🎯 Mode:', mode, 'Prompt:', prompt.substring(0, 50) + '...');
             
             closeAIModal();
-            showLoading(mode === 'enhance' ? 'Enhancing poster...' : 'Generating AI variant...');
+            showLoading(mode === 'enhance' ? 'Enhancing poster...' : mode === 'generate' ? 'Generating from prompt...' : 'Generating with reference...');
             
             try {
                 // Backup text layers
@@ -987,29 +993,25 @@ Style: professional, high quality, sharp typography.</textarea>
                 
                 let aiImageUrl;
                 
-                if (mode === 'reference') {
-                    // With Reference - Remove text first
-                    const textObjs = canvas.getObjects().filter(o => o.type === 'i-text' || o.type === 'text');
-                    textObjs.forEach(o => canvas.remove(o));
-                    canvas.renderAll();
-                    
-                    const dataURL = canvas.toDataURL({ format: 'png', quality: 1 });
-                    const strengthEl = document.getElementById('reference-strength');
-                    const strength = strengthEl ? parseFloat(strengthEl.value) : 0.7;
-                    aiImageUrl = await generateLeonardoWithReference(dataURL, apiKey, prompt, strength);
-                    
-                } else if (mode === 'generate') {
-                    // From Scratch - No need to remove text
+                if (mode === 'generate') {
+                    // From Scratch - text-to-image
                     aiImageUrl = await generateLeonardoTextToImage(apiKey, prompt);
                     
                 } else {
-                    // Enhance - Remove text first
+                    // Both 'reference' and 'enhance' use image-to-image
                     const textObjs = canvas.getObjects().filter(o => o.type === 'i-text' || o.type === 'text');
                     textObjs.forEach(o => canvas.remove(o));
                     canvas.renderAll();
                     
-                    const strengthEl = document.getElementById('ai-strength');
-                    const strength = strengthEl ? parseInt(strengthEl.value) / 100 : 0.15;
+                    let strength;
+                    if (mode === 'reference') {
+                        const strengthEl = document.getElementById('reference-strength');
+                        strength = strengthEl ? parseFloat(strengthEl.value) : 0.7;
+                    } else {
+                        const strengthEl = document.getElementById('ai-strength');
+                        strength = strengthEl ? parseInt(strengthEl.value) / 100 : 0.15;
+                    }
+                    
                     const dataURL = canvas.toDataURL({ format: 'png', quality: 1 });
                     aiImageUrl = await generateLeonardoImageToImage(dataURL, apiKey, prompt, strength);
                 }
@@ -1050,15 +1052,15 @@ Style: professional, high quality, sharp typography.</textarea>
         }
 
         // Leonardo AI API Functions
-        async function generateLeonardoWithReference(imageDataURL, apiKey, promptText, strength) {
-            console.log('🎯 With Reference Mode - Strength:', strength);
+        async function generateLeonardoImageToImage(imageDataURL, apiKey, promptText, strength) {
+            console.log('🎨 Image-to-Image - Strength:', strength);
             
             try {
                 const response = await fetch(imageDataURL);
                 const blob = await response.blob();
                 
-                // Upload reference image
-                console.log('📤 Uploading reference...');
+                // Upload image
+                console.log('📤 Uploading image...');
                 const uploadRequest = await fetch('https://cloud.leonardo.ai/api/rest/v1/init-image', {
                     method: 'POST',
                     headers: {
@@ -1091,17 +1093,17 @@ Style: professional, high quality, sharp typography.</textarea>
                         resolve();
                     };
                     xhr.onerror = () => {
-                        console.log('⚠️ S3 XHR error (upload likely succeeded, status:', xhr.status, ')');
+                        console.log('⚠️ S3 XHR error (upload likely succeeded)');
                         resolve();
                     };
                     xhr.send(formData);
                 });
                 
-                console.log('⏳ Waiting 10 seconds for image processing...');
+                console.log('⏳ Waiting 10 seconds for processing...');
                 await new Promise(r => setTimeout(r, 10000));
                 
-                // Generate with ControlNet
-                console.log('🎨 Generating with image guidance...');
+                // Generate with image-to-image
+                console.log('🎨 Generating (strength:', strength, ')...');
                 const genResponse = await fetch('https://cloud.leonardo.ai/api/rest/v1/generations', {
                     method: 'POST',
                     headers: {
@@ -1111,26 +1113,19 @@ Style: professional, high quality, sharp typography.</textarea>
                     body: JSON.stringify({
                         height: 1024,
                         width: 1024,
-                        modelId: "6bef9f1b-29cb-40c7-b9df-32b51c1f67d3",
+                        modelId: "aa77f04e-3eec-4034-9c07-d0f619684628",
                         prompt: promptText,
-                        num_images: 1,
-                        controlnets: [{
-                            initImageId: imageId,
-                            initImageType: "UPLOADED",
-                            preprocessorId: 133,
-                            weight: strength
-                        }],
+                        init_image_id: imageId,
+                        init_strength: strength,
                         guidance_scale: 7,
                         num_inference_steps: 50,
-                        alchemy: true,
-                        promptMagic: true,
                         public: false
                     })
                 });
                 
                 if (!genResponse.ok) {
                     const errorText = await genResponse.text();
-                    console.error('❌ Generation error response:', errorText);
+                    console.error('❌ Generation error:', errorText);
                     throw new Error(`Generation failed: ${genResponse.status} - ${errorText}`);
                 }
                 
@@ -1140,7 +1135,7 @@ Style: professional, high quality, sharp typography.</textarea>
                 return await pollForResult(generationId, apiKey);
                 
             } catch (error) {
-                console.error('❌ With Reference error:', error);
+                console.error('❌ Image-to-Image error:', error);
                 throw error;
             }
         }
@@ -1158,19 +1153,19 @@ Style: professional, high quality, sharp typography.</textarea>
                     body: JSON.stringify({
                         height: 1024,
                         width: 1024,
-                        modelId: "6bef9f1b-29cb-40c7-b9df-32b51c1f67d3",
+                        modelId: "aa77f04e-3eec-4034-9c07-d0f619684628",
                         prompt: promptText,
                         num_images: 1,
                         guidance_scale: 7,
                         num_inference_steps: 50,
-                        alchemy: true,
-                        promptMagic: true,
                         public: false
                     })
                 });
                 
                 if (!genResponse.ok) {
-                    throw new Error('Generation failed: ' + genResponse.status);
+                    const errorText = await genResponse.text();
+                    console.error('❌ Generation error:', errorText);
+                    throw new Error(`Generation failed: ${genResponse.status} - ${errorText}`);
                 }
                 
                 const genData = await genResponse.json();
@@ -1180,84 +1175,6 @@ Style: professional, high quality, sharp typography.</textarea>
                 
             } catch (error) {
                 console.error('❌ Text-to-Image error:', error);
-                throw error;
-            }
-        }
-
-        async function generateLeonardoImageToImage(imageDataURL, apiKey, promptText, strength) {
-            console.log('🎨 Image-to-Image - Strength:', strength);
-            
-            try {
-                const response = await fetch(imageDataURL);
-                const blob = await response.blob();
-                
-                const uploadRequest = await fetch('https://cloud.leonardo.ai/api/rest/v1/init-image', {
-                    method: 'POST',
-                    headers: {
-                        'authorization': `Bearer ${apiKey}`,
-                        'content-type': 'application/json'
-                    },
-                    body: JSON.stringify({ extension: 'png' })
-                });
-                
-                if (!uploadRequest.ok) {
-                    throw new Error('Upload failed: ' + uploadRequest.status);
-                }
-                
-                const uploadData = await uploadRequest.json();
-                const { url: uploadUrl, fields, id: imageId } = uploadData.uploadInitImage;
-                
-                const formData = new FormData();
-                const fieldsObj = typeof fields === 'string' ? JSON.parse(fields) : fields;
-                Object.keys(fieldsObj).forEach(key => formData.append(key, fieldsObj[key]));
-                formData.append('file', blob);
-                
-                await new Promise((resolve) => {
-                    const xhr = new XMLHttpRequest();
-                    xhr.open('POST', uploadUrl);
-                    xhr.onload = () => {
-                        console.log('✅ S3 upload status:', xhr.status);
-                        resolve();
-                    };
-                    xhr.onerror = () => {
-                        console.log('⚠️ S3 XHR error (upload likely succeeded)');
-                        resolve();
-                    };
-                    xhr.send(formData);
-                });
-                
-                console.log('⏳ Waiting 10 seconds for processing...');
-                await new Promise(r => setTimeout(r, 10000));
-                
-                const genResponse = await fetch('https://cloud.leonardo.ai/api/rest/v1/generations', {
-                    method: 'POST',
-                    headers: {
-                        'authorization': `Bearer ${apiKey}`,
-                        'content-type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        height: 1024,
-                        width: 1024,
-                        modelId: "6bef9f1b-29cb-40c7-b9df-32b51c1f67d3",
-                        prompt: promptText,
-                        init_image_id: imageId,
-                        init_strength: strength,
-                        guidance_scale: 7,
-                        public: false
-                    })
-                });
-                
-                if (!genResponse.ok) {
-                    throw new Error('Generation failed: ' + genResponse.status);
-                }
-                
-                const genData = await genResponse.json();
-                const generationId = genData.sdGenerationJob?.generationId;
-                
-                return await pollForResult(generationId, apiKey);
-                
-            } catch (error) {
-                console.error('❌ Image-to-Image error:', error);
                 throw error;
             }
         }
