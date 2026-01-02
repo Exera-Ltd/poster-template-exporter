@@ -495,6 +495,11 @@
                 const maskImageId = await uploadImage(maskDataURL, apiKey);
                 console.log('✅ Mask image ID:', maskImageId);
                 
+                // Extra wait to ensure both images are fully processed
+                updateLoadingText('Waiting for image processing to complete...');
+                console.log('⏳ Extra 5 second wait for safety...');
+                await new Promise(r => setTimeout(r, 5000));
+                
                 // Step 5: Generate with Canvas Mode
                 updateLoadingText('Generating with Canvas Mode (30-90s)...');
                 
@@ -613,8 +618,20 @@
                 xhr.send(formData);
             });
             
-            // Wait for processing
-            await new Promise(r => setTimeout(r, 10000));
+            // Wait for processing (Canvas Mode needs longer)
+            console.log('⏳ Waiting 15 seconds for Leonardo to process image...');
+            await new Promise(r => setTimeout(r, 15000));
+            
+            // Verify image is ready
+            const verifyResponse = await fetch(
+                `https://cloud.leonardo.ai/api/rest/v1/init-image/${imageId}`,
+                { headers: { 'authorization': `Bearer ${apiKey}` } }
+            );
+            
+            if (verifyResponse.ok) {
+                const verifyData = await verifyResponse.json();
+                console.log('✅ Image status:', verifyData);
+            }
             
             return imageId;
         }
