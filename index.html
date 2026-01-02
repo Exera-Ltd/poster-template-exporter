@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BatchPoster Pro - Canvas Mode VERIFIED</title>
+    <title>BatchPoster Pro - Image-to-Image Variants</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -243,15 +243,41 @@
             font-size: 12px;
             margin-top: 10px;
         }
+
+        .variants-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .variant-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .variant-card:hover {
+            border-color: #667eea;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .variant-card img {
+            width: 100%;
+            display: block;
+        }
     </style>
 </head>
 <body>
-    <div class="version-badge">✅ CANVAS MODE - VERIFIED API</div>
+    <div class="version-badge">✨ IMAGE-TO-IMAGE MODE</div>
     
     <div class="container">
         <div class="header">
-            <h1>🎨 BatchPoster Pro - Canvas Mode</h1>
-            <p>Precise inpainting with Leonardo AI - Change specific areas only!</p>
+            <h1>🎨 BatchPoster Pro - Variant Generator</h1>
+            <p>Generate creative variants of your poster using AI!</p>
         </div>
         
         <div class="main-grid">
@@ -262,7 +288,7 @@
                     <div class="btn-grid">
                         <div class="btn" onclick="addText()">📝 Text</div>
                         <div class="btn" onclick="document.getElementById('img-upload').click()">🖼️ Image</div>
-                        <div class="btn btn-ai" onclick="openCanvasModal()">🎨 Canvas AI</div>
+                        <div class="btn btn-ai" onclick="openVariantModal()">✨ Generate Variants</div>
                         <div class="btn" onclick="downloadPoster()">💾 Download</div>
                     </div>
                     <input type="file" id="img-upload" accept="image/*" style="display:none" onchange="handleImageUpload(event)">
@@ -279,9 +305,6 @@
                         <input type="number" id="canvas-height" value="1024" min="512" max="1536" step="8">
                     </div>
                     <button class="btn" style="width:100%" onclick="updateCanvasSize()">Apply Size</button>
-                    <div class="info-box">
-                        <strong>Note:</strong> Dimensions must be divisible by 8 for Canvas Mode
-                    </div>
                 </div>
                 
                 <div class="section" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1)); border: 2px solid #667eea;">
@@ -302,6 +325,11 @@
                 <div class="canvas-container">
                     <canvas id="canvas"></canvas>
                 </div>
+                
+                <div id="variants-container" style="display:none; margin-top: 30px;">
+                    <h3 style="margin-bottom: 15px;">🎨 Generated Variants (Click to Apply)</h3>
+                    <div id="variants-grid" class="variants-grid"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -318,9 +346,10 @@
     <div id="notification" class="notification"></div>
     
     <script>
-        console.log('🎨 BatchPoster Pro - Canvas Mode VERIFIED');
+        console.log('✨ BatchPoster Pro - Image-to-Image Variant Generator');
         
         let canvas;
+        let generatedVariants = [];
         
         window.onload = function() {
             initCanvas();
@@ -393,53 +422,63 @@
             });
         }
         
-        function openCanvasModal() {
+        function openVariantModal() {
             const modal = `
-                <div class="modal active" id="canvas-modal">
+                <div class="modal active" id="variant-modal">
                     <div class="modal-content">
-                        <h2>🎨 Leonardo Canvas Mode (Inpainting)</h2>
-                        <p style="color: #666; margin-bottom: 20px;">Change specific areas of your poster while keeping everything else intact</p>
+                        <h2>✨ Generate Poster Variants</h2>
+                        <p style="color: #666; margin-bottom: 20px;">Create AI-powered variations based on your current poster design</p>
                         
                         <div class="form-group">
-                            <label>What to Change</label>
-                            <textarea id="mask-prompt" style="width:100%; min-height:100px;" placeholder="Example: red Toyota Corolla, front view, studio lighting">blue Honda Civic, professional studio photo, front three-quarter view, clean background</textarea>
+                            <label>Variation Prompt</label>
+                            <textarea id="variant-prompt" style="width:100%; min-height:100px;" placeholder="Describe what you want in the variants...
+Examples:
+• same layout but different color scheme, vibrant and energetic
+• professional business version with blue tones
+• modern minimalist style with pastel colors
+• festive holiday theme with decorations">same composition but with autumn colors, warm orange and golden tones, cozy atmosphere</textarea>
                         </div>
                         
                         <div class="form-group">
-                            <label>Mask Area (Where to Apply Changes)</label>
-                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-                                <input type="number" id="mask-x" placeholder="X" value="200">
-                                <input type="number" id="mask-y" placeholder="Y" value="300">
-                                <input type="number" id="mask-width" placeholder="Width" value="600">
-                                <input type="number" id="mask-height" placeholder="Height" value="400">
-                            </div>
-                            <div class="info-box" style="margin-top: 10px;">
-                                <strong>Coordinates:</strong> X, Y = top-left corner position<br>
-                                Width, Height = size of area to change
-                            </div>
+                            <label>Number of Variants</label>
+                            <select id="num-variants">
+                                <option value="1">1 variant</option>
+                                <option value="2" selected>2 variants</option>
+                                <option value="3">3 variants</option>
+                                <option value="4">4 variants</option>
+                            </select>
                         </div>
                         
                         <div class="form-group">
-                            <label>Inpaint Strength: <span id="inpaint-val">85%</span></label>
-                            <input type="range" id="inpaint-strength" min="50" max="95" value="85" 
-                                   oninput="document.getElementById('inpaint-val').textContent = this.value + '%'" 
+                            <label>Reference Strength: <span id="strength-val">60%</span></label>
+                            <input type="range" id="init-strength" min="30" max="85" value="60" 
+                                   oninput="document.getElementById('strength-val').textContent = this.value + '%'" 
                                    style="width: 100%;">
                             <p style="font-size: 11px; color: #666; margin-top: 5px;">
-                                Higher = more change, Lower = closer to original
+                                Higher = stays closer to original | Lower = more creative freedom
                             </p>
                         </div>
                         
-                        <div class="warning-box">
-                            <strong>⚠️ Important:</strong><br>
-                            • Canvas must have content (not empty)<br>
-                            • Dimensions must be divisible by 8<br>
-                            • Max size: 1536x1536<br>
-                            • Generation takes 30-90 seconds
+                        <div class="form-group">
+                            <label>Quality Enhancement</label>
+                            <select id="enhancement-type">
+                                <option value="none">Standard Quality</option>
+                                <option value="alchemy" selected>Alchemy (Better Quality)</option>
+                                <option value="photoreal">PhotoReal (Photorealistic)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="info-box">
+                            <strong>💡 Tips:</strong><br>
+                            • Canvas must have content before generating<br>
+                            • Higher reference strength = more similar to original<br>
+                            • Each variant takes ~20-40 seconds<br>
+                            • Click on generated variants to apply to canvas
                         </div>
                         
                         <div style="display: flex; gap: 10px; margin-top: 20px;">
-                            <button class="btn btn-ai" style="flex: 1; padding: 15px;" onclick="generateCanvasInpaint()">
-                                🎨 Generate with Canvas Mode
+                            <button class="btn btn-ai" style="flex: 1; padding: 15px;" onclick="generateVariants()">
+                                ✨ Generate Variants
                             </button>
                             <button class="btn" style="flex: 0.3; padding: 15px;" onclick="closeModal()">
                                 ❌ Cancel
@@ -452,18 +491,16 @@
         }
         
         function closeModal() {
-            const modal = document.getElementById('canvas-modal');
+            const modal = document.getElementById('variant-modal');
             if (modal) modal.remove();
         }
         
-        async function generateCanvasInpaint() {
+        async function generateVariants() {
             const apiKey = document.getElementById('api-key').value.trim();
-            const prompt = document.getElementById('mask-prompt').value.trim();
-            const maskX = parseInt(document.getElementById('mask-x').value);
-            const maskY = parseInt(document.getElementById('mask-y').value);
-            const maskWidth = parseInt(document.getElementById('mask-width').value);
-            const maskHeight = parseInt(document.getElementById('mask-height').value);
-            const inpaintStrength = parseInt(document.getElementById('inpaint-strength').value);
+            const prompt = document.getElementById('variant-prompt').value.trim();
+            const numVariants = parseInt(document.getElementById('num-variants').value);
+            const initStrength = parseFloat(document.getElementById('init-strength').value) / 100;
+            const enhancement = document.getElementById('enhancement-type').value;
             
             if (!apiKey) {
                 alert('⚠️ Please enter Leonardo API key');
@@ -471,41 +508,45 @@
             }
             
             if (!prompt) {
-                alert('⚠️ Please enter what you want to generate');
+                alert('⚠️ Please enter a variation prompt');
                 return;
             }
             
             closeModal();
-            showLoading('Preparing images...');
+            showLoading('Preparing reference image...');
             
             try {
-                // Step 1: Export canvas as base image
-                const baseDataURL = canvas.toDataURL({ format: 'png', quality: 1 });
+                // Step 1: Export current canvas
+                const canvasDataURL = canvas.toDataURL({ format: 'png', quality: 1 });
                 
-                // Step 2: Create mask (white on area to change, black elsewhere)
-                const maskDataURL = createMask(canvas.width, canvas.height, maskX, maskY, maskWidth, maskHeight);
+                // Step 2: Upload as reference image
+                updateLoadingText('Uploading reference image...');
+                const initImageId = await uploadImage(canvasDataURL, apiKey);
+                console.log('✅ Reference image ID:', initImageId);
                 
-                // Step 3: Upload base image
-                updateLoadingText('Uploading base image...');
-                const baseImageId = await uploadImage(baseDataURL, apiKey);
-                console.log('✅ Base image ID:', baseImageId);
+                // Step 3: Generate variants
+                updateLoadingText(`Generating ${numVariants} variant(s)... (0/${numVariants})`);
                 
-                // Step 4: Upload mask image
-                updateLoadingText('Uploading mask...');
-                const maskImageId = await uploadImage(maskDataURL, apiKey);
-                console.log('✅ Mask image ID:', maskImageId);
+                const generationBody = {
+                    prompt: prompt,
+                    num_images: numVariants,
+                    init_image_id: initImageId,
+                    init_strength: initStrength,
+                    width: canvas.width,
+                    height: canvas.height,
+                    guidance_scale: 7,
+                    modelId: "1e60896f-3c26-4296-8ecc-53e2afecc132" // Leonardo Diffusion XL
+                };
                 
-                // Extra wait to ensure both images are fully processed
-                updateLoadingText('Waiting for image processing to complete...');
-                console.log('⏳ Extra 5 second wait for safety...');
-                await new Promise(r => setTimeout(r, 5000));
+                // Add quality enhancements
+                if (enhancement === 'alchemy') {
+                    generationBody.alchemy = true;
+                } else if (enhancement === 'photoreal') {
+                    generationBody.photoReal = true;
+                    generationBody.photoRealVersion = "v2";
+                }
                 
-                // Step 5: Generate with Canvas Mode
-                updateLoadingText('Generating with Canvas Mode (30-90s)...');
-                
-                // Convert inpaint strength to init_strength (inverted!)
-                const initStrength = 1 - (inpaintStrength / 100);
-                console.log('🎨 Inpaint Strength:', inpaintStrength + '% → init_strength:', initStrength);
+                console.log('🎨 Generation request:', generationBody);
                 
                 const genResponse = await fetch('https://cloud.leonardo.ai/api/rest/v1/generations', {
                     method: 'POST',
@@ -513,18 +554,7 @@
                         'authorization': `Bearer ${apiKey}`,
                         'content-type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        prompt: prompt,
-                        canvasRequest: true,  // REQUIRED for Canvas Mode
-                        canvasRequestType: "INPAINT",
-                        canvasInitId: baseImageId,
-                        canvasMaskId: maskImageId,
-                        init_strength: initStrength,
-                        num_images: 1,
-                        guidance_scale: 7,
-                        modelId: "1e60896f-3c26-4296-8ecc-53e2afecc132"  // Leonardo Diffusion XL
-                        // NOTE: alchemy, photoReal, promptMagic NOT compatible with Canvas Mode
-                    })
+                    body: JSON.stringify(generationBody)
                 });
                 
                 if (!genResponse.ok) {
@@ -537,43 +567,19 @@
                 
                 console.log('✅ Generation ID:', generationId);
                 
-                // Step 6: Poll for result
-                updateLoadingText('Generating (check console for progress)...');
-                const resultUrl = await pollForResult(generationId, apiKey);
+                // Step 4: Poll for results
+                const resultUrls = await pollForResults(generationId, apiKey, numVariants);
                 
-                // Step 7: Load result
-                updateLoadingText('Loading result...');
-                fabric.Image.fromURL(resultUrl, function(img) {
-                    img.scaleToWidth(canvas.width);
-                    img.scaleToHeight(canvas.height);
-                    canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas));
-                    
-                    hideLoading();
-                    showNotification('✅ Canvas inpaint complete!');
-                }, { crossOrigin: 'anonymous' });
+                // Step 5: Display variants
+                hideLoading();
+                displayVariants(resultUrls);
+                showNotification(`✅ Generated ${numVariants} variant(s)!`);
                 
             } catch (error) {
                 hideLoading();
                 console.error('❌ Error:', error);
                 alert('Failed: ' + error.message);
             }
-        }
-        
-        function createMask(width, height, x, y, w, h) {
-            const maskCanvas = document.createElement('canvas');
-            maskCanvas.width = width;
-            maskCanvas.height = height;
-            const ctx = maskCanvas.getContext('2d');
-            
-            // Fill with black (keep everything)
-            ctx.fillStyle = 'black';
-            ctx.fillRect(0, 0, width, height);
-            
-            // Draw white rectangle (change this area)
-            ctx.fillStyle = 'white';
-            ctx.fillRect(x, y, w, h);
-            
-            return maskCanvas.toDataURL('image/png');
         }
         
         async function uploadImage(dataURL, apiKey) {
@@ -618,26 +624,15 @@
                 xhr.send(formData);
             });
             
-            // Wait for processing (Canvas Mode needs longer)
-            console.log('⏳ Waiting 15 seconds for Leonardo to process image...');
-            await new Promise(r => setTimeout(r, 15000));
-            
-            // Verify image is ready
-            const verifyResponse = await fetch(
-                `https://cloud.leonardo.ai/api/rest/v1/init-image/${imageId}`,
-                { headers: { 'authorization': `Bearer ${apiKey}` } }
-            );
-            
-            if (verifyResponse.ok) {
-                const verifyData = await verifyResponse.json();
-                console.log('✅ Image status:', verifyData);
-            }
+            // Wait for processing
+            console.log('⏳ Waiting 8 seconds for Leonardo to process image...');
+            await new Promise(r => setTimeout(r, 8000));
             
             return imageId;
         }
         
-        async function pollForResult(generationId, apiKey) {
-            console.log('⏳ Polling for result...');
+        async function pollForResults(generationId, apiKey, numExpected) {
+            console.log('⏳ Polling for results...');
             
             for (let i = 0; i < 60; i++) {
                 await new Promise(r => setTimeout(r, 3000));
@@ -654,13 +649,14 @@
                 
                 const statusData = await statusResponse.json();
                 const status = statusData.generations_by_pk?.status;
+                const images = statusData.generations_by_pk?.generated_images || [];
                 
-                console.log(`🔄 Poll ${i + 1}/60: ${status}`);
+                console.log(`🔄 Poll ${i + 1}/60: ${status} (${images.length}/${numExpected} images)`);
+                updateLoadingText(`Generating variants... (${images.length}/${numExpected})`);
                 
-                if (status === 'COMPLETE') {
-                    const imageUrl = statusData.generations_by_pk?.generated_images[0]?.url;
-                    console.log('🎉 Complete!');
-                    return imageUrl;
+                if (status === 'COMPLETE' && images.length === numExpected) {
+                    console.log('🎉 All variants complete!');
+                    return images.map(img => img.url);
                 }
                 
                 if (status === 'FAILED') {
@@ -669,6 +665,41 @@
             }
             
             throw new Error('Timeout after 3 minutes');
+        }
+        
+        function displayVariants(urls) {
+            generatedVariants = urls;
+            
+            const container = document.getElementById('variants-container');
+            const grid = document.getElementById('variants-grid');
+            
+            grid.innerHTML = '';
+            
+            urls.forEach((url, index) => {
+                const card = document.createElement('div');
+                card.className = 'variant-card';
+                card.innerHTML = `<img src="${url}" alt="Variant ${index + 1}" crossorigin="anonymous">`;
+                card.onclick = () => applyVariant(url);
+                grid.appendChild(card);
+            });
+            
+            container.style.display = 'block';
+            
+            // Scroll to variants
+            container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        
+        function applyVariant(url) {
+            showLoading('Applying variant to canvas...');
+            
+            fabric.Image.fromURL(url, function(img) {
+                img.scaleToWidth(canvas.width);
+                img.scaleToHeight(canvas.height);
+                canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas));
+                
+                hideLoading();
+                showNotification('✅ Variant applied to canvas!');
+            }, { crossOrigin: 'anonymous' });
         }
         
         function downloadPoster() {
