@@ -94,13 +94,18 @@
             'content-type': 'application/json'
         },
         body: JSON.stringify({
-            height: 1024,
-            width: 1024,
-            modelId: "6bef9f1b-29cb-40c7-b9df-32b51c1f67d3",
-            prompt: prompt,
-            init_image_id: imageId,
-            init_strength: strength,
-            guidance_scale: 7
+    height: 1024,
+    width: 1024,
+    modelId: "6bef9f1b-29cb-40c7-b9df-32b51c1f67d3",
+    prompt: promptText || "high quality enhancement, sharp details, vibrant colors, professional finish, enhanced contrast, polished design",
+    init_image_id: imageId,
+    init_strength: strengthDecimal,
+    guidance_scale: 7,
+    num_inference_steps: 50,  // Add this!
+    alchemy: true,
+    promptMagic: true,
+    photoReal: false,
+    public: false
         })
     });
     
@@ -3193,7 +3198,7 @@
         
         <div class="form-group">
             <label>Style Prompt</label>
-            <textarea id="ai-prompt" style="width:100%; min-height:100px;">professional poster design, vibrant colors, artistic style</textarea>
+            <textarea id="ai-prompt" style="width:100%; min-height:100px;">professional car rental poster, vibrant yellow and blue corporate colors, sharp text, crisp logo, high quality commercial design, polished professional finish, enhanced contrast, vivid colors, premium brand aesthetic, clean layout, HD graphics, sharp details, modern professional poster</textarea>
         </div>
         
         <div class="form-group">
@@ -3406,16 +3411,30 @@ async function generateLeonardoVariant(imageDataURL, apiKey, promptText, strengt
         }
         
         const generationPayload = {
-            height: 1024,
-            width: 1024,
-            modelId: "6bef9f1b-29cb-40c7-b9df-32b51c1f67d3",
-            prompt: promptText || "enhanced design, vibrant colors, professional aesthetic",
-            num_images: 1,
-            init_image_id: imageId,  // Must not be undefined!
-            init_strength: strengthDecimal,
-            guidance_scale: 7,
-            public: false
-        };
+    height: 1024,
+    width: 1024,
+    modelId: "6bef9f1b-29cb-40c7-b9df-32b51c1f67d3",
+    
+    // KEY: Specific enhancement prompt
+    prompt: "professional poster design, sharp details, vibrant colors, high quality, crisp graphics, polished finish, premium look, enhanced contrast, vivid yellow and blue colors, clean design, HD quality, professional commercial poster",
+    
+    // KEY: LOW strength = keep most of original
+    init_strength: 0.15,  // Only 15% change - just enhancement!
+    
+    num_images: 1,
+    init_image_id: imageId,
+    
+    // Enhancement settings
+    guidance_scale: 7,
+    num_inference_steps: 50,  // More steps = better quality
+    
+    // IMPORTANT: Enable quality features
+    alchemy: true,
+    photoReal: false,  // Keep it as graphic design
+    promptMagic: true,
+    
+    public: false
+};
         
         console.log('📋 Full generation payload:', JSON.stringify(generationPayload, null, 2));
         
