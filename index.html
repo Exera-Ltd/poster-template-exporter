@@ -3218,70 +3218,267 @@
          }
          
          async function generateAIVariant() {
-         const apiKey = document.getElementById('leonardo-api-key').value.trim();
-         const prompt = document.getElementById('ai-prompt').value;
-         const strength = parseInt(document.getElementById('ai-strength').value) / 100;
-         
-         closeAIModal();
-         showLoading('Generating AI variant...');
-         
-         try {
-         // Backup text layers
-         textLayersBackup = [];
-         canvas.getObjects().forEach(obj => {
-             if (obj.type === 'i-text' || obj.type === 'text') {
-                 textLayersBackup.push({
-                     text: obj.text,
-                     left: obj.left,
-                     top: obj.top,
-                     fontSize: obj.fontSize,
-                     fontFamily: obj.fontFamily,
-                     fill: obj.fill,
-                     fontWeight: obj.fontWeight,
-                     fontStyle: obj.fontStyle,
-                     textAlign: obj.textAlign,
-                     opacity: obj.opacity,
-                     angle: obj.angle,
-                     scaleX: obj.scaleX,
-                     scaleY: obj.scaleY
-                 });
-             }
-         });
-         
-         // Remove text temporarily
-         const textObjs = canvas.getObjects().filter(o => o.type === 'i-text' || o.type === 'text');
-         textObjs.forEach(o => canvas.remove(o));
-         canvas.renderAll();
-         
-         // Export without text
-         const dataURL = canvas.toDataURL({ format: 'png', quality: 1 });
-         
-         // Generate AI variant
-         const aiImageUrl = await generateLeonardoVariant(dataURL, apiKey, prompt, strength);
-         
-         // Load AI image as background
-         fabric.Image.fromURL(aiImageUrl, function(aiImg) {
-             const zoom = canvas.getZoom();
-             aiImg.scaleToWidth(canvas.width / zoom);
-             aiImg.scaleToHeight(canvas.height / zoom);
-             canvas.setBackgroundImage(aiImg, canvas.renderAll.bind(canvas));
-             
-             // Restore text
-             textLayersBackup.forEach(data => {
-                 const text = new fabric.IText(data.text, data);
-                 canvas.add(text);
-             });
-             
-             canvas.renderAll();
-             hideLoading();
-             showNotification('✨ AI variant generated! Text is editable!');
-         }, { crossOrigin: 'anonymous' });
-         
-         } catch (error) {
-         hideLoading();
-         alert('AI generation failed: ' + error.message);
-         }
-         }
+    // Capture values IMMEDIATELY when function starts
+    const apiKey = document.getElementById('leonardo-api-key').value.trim();
+    const userPrompt = document.getElementById('ai-prompt').value.trim();
+    const strengthValue = parseInt(document.getElementById('ai-strength').value);
+    
+    console.log('🎯 Captured values:', {
+        apiKey: apiKey ? 'Present' : 'Missing',
+        prompt: userPrompt,
+        strengthPercent: strengthValue
+    });
+    
+    if (!apiKey) {
+        alert('Please enter Leonardo API key');
+        return;
+    }
+    
+    closeAIModal();
+    showLoading('Preparing image...');
+    
+    try {
+        // Backup text layers
+        textLayersBackup = [];
+        canvas.getObjects().forEach(obj => {
+            if (obj.type === 'i-text' || obj.type === 'text') {
+                textLayersBackup.push({
+                    text: obj.text,
+                    left: obj.left,
+                    top: obj.top,
+                    fontSize: obj.fontSize,
+                    fontFamily: obj.fontFamily,
+                    fill: obj.fill,
+                    fontWeight: obj.fontWeight,
+                    fontStyle: obj.fontStyle,
+                    textAlign: obj.textAlign,
+                    opacity: obj.opacity,
+                    angle: obj.angle,
+                    scaleX: obj.scaleX,
+                    scaleY: obj.scaleY,
+                    shadow: obj.shadow,
+                    stroke: obj.stroke,
+                    strokeWidth: obj.strokeWidth
+                });
+            }
+        });
+        
+        // Remove text temporarily
+        const textObjs = canvas.getObjects().filter(o => o.type === 'i-text' || o.type === 'text');
+        textObjs.forEach(o => canvas.remove(o));
+        canvas.renderAll();
+        
+        // Export canvas
+        updateLoadingText('Exporting canvas...');
+        const currentZoom = canvas.getZoom();
+        const actualWidth = canvas.getWidth() / currentZoom;
+        const actualHeight = canvas.getHeight() / currentZoom;
+        const multiplier = 1024 / Math.max(actualWidth, actualHeight);
+        
+        const dataURL = canvas.toDataURL({
+            format: 'png',
+            quality: 1,
+            multiplier: multiplier
+        });
+        
+        console.log('✅ Canvas exported');
+        
+        // NOW call Leonardo with the captured values
+        updateLoadingText('Generating AI variant...');
+        
+        const aiImageUrl = await generateLeonardoVariant(
+            dataURL, 
+            apiKey, 
+            userPrompt, 
+            strengthValue / 100  // Convert 0-100 to 0-1
+        );
+        
+        console.log('✅ AI image received:', aiImageUrl);
+        
+        // Load AI image
+        updateLoadingText('Loading AI image...');
+        
+        fabric.Image.fromURL(aiImageUrl, function(aiImg) {
+            const zoom = canvas.getZoom();
+            aiImg.scaleToWidth(canvas.width / zoom);
+            aiImg.scaleToHeight(canvas.height / zoom);
+            canvas.setBackgroundImage(aiImg, canvas.renderAll.bind(canvas));
+            
+            // Restore text
+            updateLoadingText('Restoring text...');
+            textLayersBackup.forEach(data => {
+                const text = new fabric.IText(data.text, data);
+                canvas.add(text);
+            });
+            
+            canvas.renderAll();
+            hideLoading();
+            showNotification('✨ AI variant generated! Text is editable!');
+            
+        }, { crossOrigin: 'anonymous' });
+        
+    } catch (error) {
+        hideLoading();
+        console.error('❌ Full error:', error);
+        alert('AI generation failed: ' + error.message + '\n\nCheck console for details.');
+    }
+}
+
+// Separate function with guaranteed parameter capture
+async function generateLeonardoVariant(imageDataURL, apiKey, promptText, strengthDecimal) {
+    console.log('🎨 generateLeonardoVariant called with:', {
+        hasDataURL: !!imageDataURL,
+        hasApiKey: !!apiKey,
+        prompt: promptText,
+        strength: strengthDecimal
+    });
+    
+    try {
+        // Convert to blob
+        const response = await fetch(imageDataURL);
+        const blob = await response.blob();
+        console.log('✅ Blob created:', blob.size, 'bytes');
+        
+        // Get upload URL
+        console.log('📤 Requesting upload URL...');
+        const uploadRequest = await fetch('https://cloud.leonardo.ai/api/rest/v1/init-image', {
+            method: 'POST',
+            headers: {
+                'accept': 'application/json',
+                'authorization': `Bearer ${apiKey}`,
+                'content-type': 'application/json'
+            },
+            body: JSON.stringify({ extension: 'png' })
+        });
+        
+        if (!uploadRequest.ok) {
+            throw new Error('Failed to get upload URL');
+        }
+        
+        const uploadData = await uploadRequest.json();
+        const uploadUrl = uploadData.uploadInitImage?.url;
+        const fieldsString = uploadData.uploadInitImage?.fields;
+        const imageId = uploadData.uploadInitImage?.id;
+        
+        console.log('✅ Upload URL received');
+        console.log('📋 Image ID:', imageId);
+        
+        if (!imageId) {
+            throw new Error('No image ID received from Leonardo');
+        }
+        
+        // Upload to S3 using XMLHttpRequest
+        console.log('📤 Uploading to S3...');
+        
+        const formData = new FormData();
+        const fieldsObj = typeof fieldsString === 'string' ? JSON.parse(fieldsString) : fieldsString;
+        
+        Object.keys(fieldsObj).forEach(key => {
+            formData.append(key, fieldsObj[key]);
+        });
+        formData.append('file', blob);
+        
+        await new Promise((resolve) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', uploadUrl);
+            xhr.onload = () => {
+                console.log('✅ S3 upload completed');
+                resolve();
+            };
+            xhr.onerror = () => {
+                console.log('⚠️ S3 XHR error (but upload likely succeeded)');
+                resolve();
+            };
+            xhr.send(formData);
+        });
+        
+        // Wait for processing
+        console.log('⏳ Waiting 8 seconds for image processing...');
+        await new Promise(r => setTimeout(r, 8000));
+        
+        // Create generation - VERIFY imageId before using it
+        console.log('🎨 Creating generation...');
+        console.log('📋 About to use imageId:', imageId);
+        console.log('📋 About to use prompt:', promptText);
+        console.log('📋 About to use strength:', strengthDecimal);
+        
+        if (!imageId) {
+            throw new Error('imageId is undefined before generation!');
+        }
+        
+        const generationPayload = {
+            height: 1024,
+            width: 1024,
+            modelId: "6bef9f1b-29cb-40c7-b9df-32b51c1f67d3",
+            prompt: promptText || "enhanced design, vibrant colors, professional aesthetic",
+            num_images: 1,
+            init_image_id: imageId,  // Must not be undefined!
+            init_strength: strengthDecimal,
+            guidance_scale: 7,
+            public: false
+        };
+        
+        console.log('📋 Full generation payload:', JSON.stringify(generationPayload, null, 2));
+        
+        const genResponse = await fetch('https://cloud.leonardo.ai/api/rest/v1/generations', {
+            method: 'POST',
+            headers: {
+                'accept': 'application/json',
+                'authorization': `Bearer ${apiKey}`,
+                'content-type': 'application/json'
+            },
+            body: JSON.stringify(generationPayload)
+        });
+        
+        if (!genResponse.ok) {
+            const errorText = await genResponse.text();
+            console.error('❌ Generation API error:', errorText);
+            throw new Error(`Generation failed: ${errorText}`);
+        }
+        
+        const genData = await genResponse.json();
+        const generationId = genData.sdGenerationJob?.generationId;
+        
+        console.log('✅ Generation created! ID:', generationId);
+        console.log('⏳ Polling for result...');
+        
+        // Poll
+        for (let i = 0; i < 60; i++) {
+            await new Promise(r => setTimeout(r, 3000));
+            
+            const statusResponse = await fetch(
+                `https://cloud.leonardo.ai/api/rest/v1/generations/${generationId}`,
+                {
+                    headers: {
+                        'accept': 'application/json',
+                        'authorization': `Bearer ${apiKey}`
+                    }
+                }
+            );
+            
+            const statusData = await statusResponse.json();
+            const status = statusData.generations_by_pk?.status;
+            
+            console.log(`🔄 Poll ${i + 1}/60: ${status}`);
+            
+            if (status === 'COMPLETE') {
+                const imageUrl = statusData.generations_by_pk?.generated_images[0]?.url;
+                console.log('🎉 Generation complete!');
+                return imageUrl;
+            }
+            
+            if (status === 'FAILED') {
+                throw new Error('Generation failed on Leonardo');
+            }
+        }
+        
+        throw new Error('Timeout');
+        
+    } catch (error) {
+        console.error('❌ Error in generateLeonardoVariant:', error);
+        throw error;
+    }
+}
          
          // Save API key
          document.getElementById('leonardo-api-key')?.addEventListener('change', function() {
